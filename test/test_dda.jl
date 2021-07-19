@@ -1,22 +1,22 @@
 using Revise
 using DDA, Test
 
-using LinearAlgebra
-
-function calc_Aj(k, r, alph, im, blockdiag)
+# using LinearAlgebra
+#
+# function calc_Aj(k, r, alph, im, blockdiag)
+# #     r_jk = norm(r)
+# #     r_n = r / r_jk
+# #
+# #     A_jk = exp(im * k * r_jk) / r_jk * (k^2 * (r_n * r_n' - I) + (im * k * r_jk - 1) / (r_jk^2) * (3 * r_n * r_n' - I))
+#
+#     A_jk = zeros(ComplexF64, length(r), 3, 3)
+#     for (k) in
 #     r_jk = norm(r)
 #     r_n = r / r_jk
 #
 #     A_jk = exp(im * k * r_jk) / r_jk * (k^2 * (r_n * r_n' - I) + (im * k * r_jk - 1) / (r_jk^2) * (3 * r_n * r_n' - I))
-
-    A_jk = zeros(ComplexF64, length(r), 3, 3)
-    for (k) in
-    r_jk = norm(r)
-    r_n = r / r_jk
-
-    A_jk = exp(im * k * r_jk) / r_jk * (k^2 * (r_n * r_n' - I) + (im * k * r_jk - 1) / (r_jk^2) * (3 * r_n * r_n' - I))
-    return A_jk
-end
+#     return A_jk
+# end
 
 
 
