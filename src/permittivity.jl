@@ -1,34 +1,57 @@
+using Interpolations
+# using Dierckx
+# # using Interpolations NOTE: hard to use
 
 # Permittivity
 # Electric susceptibility
 
-abstract type Permittivity end
+abstract type AbstractPermittivity end
 
 # only real values
-struct DielectricConstant <: Permittivity
+struct DielectricConstant <: PermAbstractPermittivityittivity
     eps::Float64
 end
+permittivity(e::DielectricConstant, lambda) = e.eps
 
 # complex (dielectric + absorption)
-struct PermittivityConstant <: Permittivity
+struct PermittivityConstant <: AbstractPermittivity
     eps::ComplexF64
 end
+permittivity(e::PermittivityConstant, lambda) = e.eps
+
+# using Dierckx
+#
+# inds = sortperm(lambda)
+# itp_real = Spline1D(lambda[inds], real(eps[inds]))
+# itp_imag = Spline1D(lambda[inds], imag(eps[inds]))
+# e = itp_real(l) + itp_imag(l) * im
 
 # Interpolated frequency dependent permitivirty
-struct PermittivityTable <: Permittivity
-    eps::Vector{ComplexF64}
-    lambda::Vector{Float64}
-    function PermittivityTable( eps::Vector{ComplexF64}, lambda::Vector{Float64})
+struct PermittivityTable <: AbstractPermittivity
+    # eps::Vector{ComplexF64}
+    # lambda::Vector{Float64}
+    function PermittivityTable(eps::Vector{ComplexF64}, lambda::Vector{Float64})
 
         inds = sortperm(lambda)
-        itp = Spline1D(lambda[inds], real(eps[inds]))
+        itp = interpolate((lambda[inds],), real(eps[inds]), Gridded(Linear()))
+        itp_imag = interpolate((lambda[inds],), imag(eps[inds]), Gridded(Linear()))
+        # itp_real = Spline1D(lambda[inds], real(eps[inds]))
+        # itp_imag = Spline1D(lambda[inds], imag(eps[inds]))
+
 
         new
     end
 end
 
-permittivity(e::DielectricConstant) = e.eps
-permittivity(e::PermittivityConstant) = e.eps
+permittivity(e::DielectricConstant, lambda) = e = itp_real(lambda) + itp_imag(lambda) * im
+
+
+
+
+
+
+
+
 
 reflective_index(e::Permittivity) = sqrt(permittivity(e))
 
@@ -155,12 +178,12 @@ using Plots
 
 using Interpolations
 inds = sortperm(lambda)
-itp_real = interpolate((lambda[inds],), real(eps[inds]), Gridded(Linear()))
-itp_imag = interpolate((lambda[inds],), imag(eps[inds]), Gridded(Linear()))
+itp = interpolate((lambda[inds],), eps[inds], Gridded(Linear()))
 
 l = LinRange(minimum(lambda), maximum(lambda), 1000)
-e = itp_real(l) + itp_imag(l)*im
+e = itp_real(l) + itp_imag(l) * im
 
+scatter(lambda, real(eps))
 scatter(lambda, real(eps), xaxis=:log)
 plot!(l, real(e))
 
@@ -168,20 +191,12 @@ scatter(lambda, imag(eps), xaxis=:log)
 plot!(l, imag(e))
 
 
-using Dierckx
-# using Interpolations NOTE: hard to use
 
-inds = sortperm(lambda)
-itp_real = Spline1D(lambda[inds], real(eps[inds]))
-itp_imag = Spline1D(lambda[inds], imag(eps[inds]))
 
-l = LinRange(minimum(lambda), maximum(lambda), 1000)
-e = itp_real(l) + itp_imag(l)*im
-
-scatter(lambda, real(eps))
+scatter(lambda, real(eps), xaxis=:log)
 plot!(l, real(e))
 
-scatter(lambda, imag(eps))
+scatter(lambda, imag(eps), xaxis=:log)
 plot!(l, imag(e))
 
 
