@@ -15,15 +15,15 @@ dims(g::CubicGrid) = (length(g.xi), length(g.yi), length(g.zi))
 
 abstract type Scatter end
 
-struct Sphere3 <: Scatter
+struct Sphere <: Scatter
     grid::CubicGrid
     center::Vector
     radius::Float64
 end
 
-function grid(s::Sphere3)
+function grid(s::Sphere)
     out = zeros(Float64, dims(s.grid))
-    for (i, x) = enumerate(s.grid.xi), (j, y) = enumerate(s.grid.yi), (k,z) = enumerate(s.grid.zi)
+    for (i, x) in enumerate(s.grid.xi), (j, y) in enumerate(s.grid.yi), (k, z) in enumerate(s.grid.zi)
         # @show x, xi
         if sqrt(x^2 + y^2 + z^2) <= s.radius
             out[i,j,k] = 1.
