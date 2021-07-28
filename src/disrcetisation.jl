@@ -4,22 +4,34 @@ using StaticArrays
 
 abstract type AbstractGrid end
 
+# struct CubicGrid <: AbstractGrid
+#     xi::StepRangeLen
+#     yi::StepRangeLen
+#     zi::StepRangeLen
+# end
+# origin(g::CubicGrid) = [g.xi[1], g.yi[1], g.zi[1]]
+# dims(g::CubicGrid) = (length(g.xi), length(g.yi), length(g.zi))
+
+
 struct CubicGrid <: AbstractGrid
-    xi::StepRangeLen
-    yi::StepRangeLen
-    zi::StepRangeLen
+    xmin
+    xmax
+    ymin
+    ymax
+    zmin
+    zmax
+    dx
 end
 
-origin(g::CubicGrid) = [g.xi[1], g.yi[1], g.zi[1]]
-dims(g::CubicGrid) = (length(g.xi), length(g.yi), length(g.zi))
+
 
 abstract type Scatter end
 
 struct Sphere <: Scatter
-    grid::CubicGrid
     center::Vector
     radius::Float64
 end
+
 
 function grid(s::Sphere)
     out = zeros(Float64, dims(s.grid))
