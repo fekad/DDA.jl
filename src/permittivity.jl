@@ -1,5 +1,8 @@
-using Interpolations
-# using Dierckx
+using Plots
+plotlyjs()
+
+using Dierckx
+# using Interpolations
 # # using Interpolations NOTE: hard to use
 
 # Permittivity
@@ -8,63 +11,54 @@ using Interpolations
 abstract type AbstractPermittivity end
 
 # only real values
-struct DielectricConstant <: PermAbstractPermittivityittivity
+struct DielectricConstant <: AbstractPermittivity
     eps::Float64
 end
-permittivity(e::DielectricConstant, lambda) = e.eps
+permittivity(e::DielectricConstant) = e.eps
+permittivity(e::DielectricConstant, lambda) = permittivity(e)
 
 # complex (dielectric + absorption)
 struct PermittivityConstant <: AbstractPermittivity
     eps::ComplexF64
 end
-permittivity(e::PermittivityConstant, lambda) = e.eps
+permittivity(e::PermittivityConstant) = e.eps
+permittivity(e::PermittivityConstant, lambda) = permittivity(e)
 
-# using Dierckx
-#
-# inds = sortperm(lambda)
-# itp_real = Spline1D(lambda[inds], real(eps[inds]))
-# itp_imag = Spline1D(lambda[inds], imag(eps[inds]))
-# e = itp_real(l) + itp_imag(l) * im
+
 
 # Interpolated frequency dependent permitivirty
 struct PermittivityTable <: AbstractPermittivity
-    # eps::Vector{ComplexF64}
-    # lambda::Vector{Float64}
-    function PermittivityTable(eps::Vector{ComplexF64}, lambda::Vector{Float64})
+    lambda::Vector{Float64}
+    eps::Vector{ComplexF64}
+    itp_real::Spline1D
+    itp_iamg::Spline1D
+    function PermittivityTable(lambda::Vector{Float64}, eps::Vector{ComplexF64})
 
         inds = sortperm(lambda)
-        itp = interpolate((lambda[inds],), real(eps[inds]), Gridded(Linear()))
-        itp_imag = interpolate((lambda[inds],), imag(eps[inds]), Gridded(Linear()))
-        # itp_real = Spline1D(lambda[inds], real(eps[inds]))
-        # itp_imag = Spline1D(lambda[inds], imag(eps[inds]))
+        # itp_real = interpolate((lambda[inds],), real(eps[inds]), Gridded(Linear()))
+        # itp_imag = interpolate((lambda[inds],), imag(eps[inds]), Gridded(Linear()))
 
+        itp_real = Spline1D(lambda[inds], real(eps[inds]))
+        itp_imag = Spline1D(lambda[inds], imag(eps[inds]))
 
-        new
+        new(lambda, eps, itp_real, itp_imag)
     end
 end
 
-permittivity(e::DielectricConstant, lambda) = e = itp_real(lambda) + itp_imag(lambda) * im
+permittivity(e::PermittivityTable, lambda) = e.itp_real(lambda) + itp_imag(lambda) * im
 
-
-
-
-
-
-
-
-
-reflective_index(e::Permittivity) = sqrt(permittivity(e))
+# reflective_index(e::Permittivity) = sqrt(permittivity(e))
 
 m1 = DielectricConstant(2)
 
 permittivity(m1)
-reflective_index(m1)
+# reflective_index(m1)
 
 
 m2 = PermittivityConstant(-0.09850 + 1.9392im)
 
 permittivity(m2)
-reflective_index(m2)
+# reflective_index(m2)
 
 # Gold, evaporated (Johnson & Christy 1972, PRB 6, 4370)
 # wave(um)
@@ -172,26 +166,10 @@ lambda = [
     0.1879
 ]
 
-
-using Plots
-
-
-using Interpolations
-inds = sortperm(lambda)
-itp = interpolate((lambda[inds],), eps[inds], Gridded(Linear()))
+m2 = PermittivityTable(lambda, eps)
 
 l = LinRange(minimum(lambda), maximum(lambda), 1000)
-e = itp_real(l) + itp_imag(l) * im
-
-scatter(lambda, real(eps))
-scatter(lambda, real(eps), xaxis=:log)
-plot!(l, real(e))
-
-scatter(lambda, imag(eps), xaxis=:log)
-plot!(l, imag(e))
-
-
-
+e = permittivity(m2, l)
 
 scatter(lambda, real(eps), xaxis=:log)
 plot!(l, real(e))
