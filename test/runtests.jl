@@ -11,3 +11,7 @@ end
 @safetestset "dipole" begin
     include("test_dipole.jl")
 end
+
+@safetestset "permitivity" begin
+    include("test_permitivity.jl")
+end

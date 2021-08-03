@@ -1,5 +1,4 @@
 
-
 @doc raw"""
 The electric field from a radiating electric dipole:
 $$

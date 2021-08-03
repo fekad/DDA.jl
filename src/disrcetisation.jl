@@ -1,6 +1,5 @@
 # using Base: Float64, disable_library_threading_hooks
 
-using StaticArrays
 
 abstract type AbstractGrid end
 
