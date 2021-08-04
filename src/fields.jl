@@ -1,4 +1,5 @@
 
+abstract type EField end
 
 # """
 # Incident wave:
@@ -7,23 +8,32 @@
 # $$
 # """
 
+# https://discourse.julialang.org/t/struct-of-arrays-soa-vs-array-of-structs-aos/30015/16
 
-#
-# struct PlaneWave
-#     E0
-#     e
-#     k
-# end
-#
-# field(r, E::PlaneWave) = E.E0 * exp(-im * dot(E.k, r))
+struct PlaneWave <: EField
+    E0
+    e
+    k
+end
+
+field(r, E::PlaneWave) = E.E0 * exp(-im * dot(E.k, r))
 # field(r::Matrix, E::PlaneWave) = [field(ri, E) for ri in eachcol(r)]
-# # E_inc(r, E::PlaneWave) = E.E0 * exp(-im * E.k)
-# # E_inc_td(t, r, E::PlaneWave, omega) = field(E) * exp(im * omega * t)
+
+function field(r::AbstractArray, e::PlaneWave)
+    out = Array{ComplexF64}(undef, size(r))
+    for i in eachindex(r)
+        out[i] = field(r[i], e)
+    end
+end
+
+# E_inc(r, E::PlaneWave) = E.E0 * exp(-im * E.k)
+# E_inc_td(t, r, E::PlaneWave, omega) = field(E) * exp(im * omega * t)
 #
 # k = [0 0 1]
 # # u = [0,0,1] polarisibility
 # E_inc(r, E_0, k) = E_0 * exp(-im * dot(k,r))
 #
+
 
 
 

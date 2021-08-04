@@ -45,17 +45,17 @@ function discretize(g::CubicGrid, s::Sphere, eps)
     return out
 end
 
-g = CubicGrid(-1, 1, -1, 1, -1, 1, .1)
-s = Sphere([0,0,0], .5)
-
 
 function positions(g::CubicGrid, s::Sphere)
     return [[x, y, z] for x in g.xrange, y in g.yrange, z in g.zrange if sqrt(x^2 + y^2 + z^2) <= s.radius]
 
 end
 
-dipoles = discretize(g, s, 1.0 + .0im)
-@time pos = positions(g, s)
+# g = CubicGrid(-1, 1, -1, 1, -1, 1, .1)
+# s = Sphere([0,0,0], .5)
+
+# dipoles = discretize(g, s, 1.0 + .0im)
+# @time pos = positions(g, s)
 
 
 
