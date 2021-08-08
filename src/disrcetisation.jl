@@ -3,7 +3,7 @@
 
 abstract type AbstractGrid end
 
-
+import Base:length
 
 struct CubicGrid <: AbstractGrid
     xrange::AbstractRange
@@ -19,18 +19,18 @@ end
 CubicGrid(xmin, xmax, ymin, ymax, zmin, zmax, dx) = CubicGrid(range(xmin, xmax, step=dx), range(ymin, ymax, step=dx), range(zmin, zmax, step=dx))
 
 dims(g::CubicGrid) = (length(g.xrange), length(g.yrange), length(g.zrange))
+length(g::CubicGrid) = *(dims(g)...)
 
 
 abstract type Scatter end
 
 struct Sphere <: Scatter
-    center::Vector
     radius::Float64
+    center::Vector
 end
 
 # sphere
 # disk
-
 
 function discretize(g::CubicGrid, s::Sphere, eps)
     out = zeros(typeof(eps), dims(g))
@@ -44,18 +44,33 @@ function discretize(g::CubicGrid, s::Sphere, eps)
     end
     return out
 end
-
+eltype(CubicGrid)
 
 function positions(g::CubicGrid, s::Sphere)
+    out = Array{Float64}(undef, (3, length(g)))
+
+    # for i eachindex(g)
+
     return [[x, y, z] for x in g.xrange, y in g.yrange, z in g.zrange if sqrt(x^2 + y^2 + z^2) <= s.radius]
 
 end
 
-# g = CubicGrid(-1, 1, -1, 1, -1, 1, .1)
+g = CubicGrid(-1, 1, -1, 1, -1, 1, .1)
 # s = Sphere([0,0,0], .5)
 
 # dipoles = discretize(g, s, 1.0 + .0im)
 # @time pos = positions(g, s)
+
+
+
+struct Disk <: Scatter
+    radius::Float64
+    height::Float64
+    center::Vector
+    orientation::Vector
+end
+
+
 
 
 
