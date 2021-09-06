@@ -1,5 +1,5 @@
 # using Base: Float64, disable_library_threading_hooks
-
+using LazyGrids: ndgrid
 
 abstract type AbstractGrid end
 
