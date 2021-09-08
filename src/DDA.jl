@@ -25,6 +25,9 @@ include("disrcetisation.jl")
 #
 
 
+# Challanges:
+# Symmetric{BlockMatrix{Symmetric{Matrix{Int64}}}}
+# a = Symmetric(BlockArray(undef_blocks, Symmetric{Int64, Matrix{Int64}}, [2,2], [2,2]))
 
 
 end # module

@@ -50,7 +50,6 @@ function interaction_A(k, r, alph)
     return Symmetric(reshape(out, 3N, 3N), :L)
 end
 
-
 @doc raw"""
 The absorption cross section:
 $$
