@@ -1,15 +1,14 @@
 using DDA
 
-using Plots
+using plot
 
-plotlyjs()
-
-# Target:
-# r = 22 nm
-# # of dipoles along the diameter: 30
-# grid spacing: d = 44/30 nm
-# # of dipoles: 14328
-# >> peak resonance at 500 nm
+# target: Au disk
+# d = 10 nm
+# # of dipoles along the diameter: 50
+# grid spacing: d = 0.2 nm
+# # of dipoles: ??
+# spaceing: d = (1) 0.2 nm, (2) 0.4 nm, (5) 1 nm,  (100) 20 nm
+# >> peak resonance at ??? nm
 
 # steps:
 # 1. create the coordinates of the dipoles,
@@ -28,12 +27,10 @@ E_inc = E_inc()
 
 # grid and target
 r = 22
-d = 2r/30
+d = 2*r/30
 
 s = Sphere(r, [0,0,0])
-# @. ((1:30) - .5) * d - r ≈ -r + d/2:d:r - d/2
-g = CubicGrid(-r+d/2:d:r-d/2,-r+d/2:d:r-d/2,-r+d/2:d:r-d/2)
-
+g = CubicGrid(-r:d:r,-r:d:r,-r:d:r)
 
 # get_dipoles
 # dipoles = get_dipoles(g, s)
@@ -47,6 +44,3 @@ lambda = 550.
 solve(dipoles, E_inc)
 
 ??material
-
-
-

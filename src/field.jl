@@ -10,6 +10,15 @@ abstract type EField end
 
 # https://discourse.julialang.org/t/struct-of-arrays-soa-vs-array-of-structs-aos/30015/16
 
+
+# polarized:
+# left and right hand circular polarized VS the orthonormal Cartesian vectors ex and ey
+
+
+
+
+
+
 struct PlaneWave <: EField
     E0
     e

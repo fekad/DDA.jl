@@ -2,21 +2,49 @@ using Revise
 using DDA
 using Plots
 
-k = [0, 0, 1.]
+plotlyjs()
+
+# k = [0, 0, 1.]
+#
+#
+# E_0 = 1.
+#
+# E_inc = DDA.PlaneWave(E_0, k)
+#
+#
+# r_n = [1, 1, 1]
+# r = r_n * (0:0.1:10)'
+#
+# E = DDA.field(r[:,1], E_inc)
+# E = DDA.field(r, E_inc)
+#
+#
+# plot(real(E))
 
 
-E_0 = 1.
+# target: Au disk
+# d = 10 nm
+# # of dipoles along the diameter: 50
+# grid spacing: d = 0.2 nm
+# # of dipoles: ??
+# spaceing: d = (1) 0.2 nm, (2) 0.4 nm, (5) 1 nm,  (100) 20 nm
+# >> peak resonance at ??? nm
 
-E_inc = DDA.PlaneWave(E_0, k)
+# steps:
+# 1. create the coordinates of the dipoles,
+# 2. assign the polarizability αj to each dipole,
+# 3. calculated the incident field E_inc, at each dipole,
+# 4. assemble the interaction matrix A and
+# 5. solve for P in the system of linear equations
 
 
-r_n = [1, 1, 1]
-r = r_n * (0:0.1:10)'
+g = CartesianGrid([.5,.5,.5], ones(3), (30,30,30))
+s = Sphere(15., [15,15,15])
+d = dipoles(g,s)
 
-E = DDA.field(r[:,1], E_inc)
-E = DDA.field(r, E_inc)
+dd=reduce(hcat, d)
+scatter3d(dd[1,:],dd[2,:],dd[3,:])
 
-
-plot(real(E))
-
-
+# g = CartesianGrid([-14.5, -14.5, -14.5], ones(3), (30,30,30))
+# s = Sphere(15., [0, 0, 0])
+# d = dipoles(g,s)

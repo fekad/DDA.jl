@@ -7,13 +7,25 @@ using Dierckx
 # # using Interpolations NOTE: hard to use
 # using Core: Vector
 
+import Meshes
+import Base.convert
+import Base.getindex
+import Base.CartesianIndecies
+
+using StaticArrays:SVector
+
 
 export E_inc, Permittivity, PermittivityTable, permittivity
 include("permittivity.jl")
 include("polarizability.jl")
-include("fields.jl")
-include("dipole.jl")
+include("field.jl")
+include("interaction.jl")
+
+export CartesianGrid
 include("disrcetisation.jl")
+
+export Sphere, dipoles
+include("scatterer.jl")
 
 # Dipole coordinates
 # Polarizability
