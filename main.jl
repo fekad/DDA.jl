@@ -38,13 +38,24 @@ plotlyjs()
 # 5. solve for P in the system of linear equations
 
 
-g = CartesianGrid([.5,.5,.5], ones(3), (30,30,30))
-s = Sphere(15., [15,15,15])
-d = dipoles(g,s)
+g = CartesianGrid([.5,.5,.5], ones(3), (30, 30, 30))
+s = Sphere(15., [15, 15, 15])
+d = dipoles(g, s)
 
-dd=reduce(hcat, d)
+dd = reduce(hcat, d)
 scatter3d(dd[1,:],dd[2,:],dd[3,:])
 
 # g = CartesianGrid([-14.5, -14.5, -14.5], ones(3), (30,30,30))
 # s = Sphere(15., [0, 0, 0])
 # d = dipoles(g,s)
+
+g = CartesianGrid([.5,.5,.5], ones(3), (30, 30, 30))
+s = Disk(15, 5, [15, 15, 0 ])
+d = dipoles(g, s)
+dd = reduce(hcat, d)
+
+# gr()
+plotlyjs()
+scatter(dd[1,:],dd[2,:],dd[3,:], aspect_ratio=:auto)
+xlims!(0,30); ylims!(0, 30); zlims!(0, 30)
+

@@ -1,18 +1,20 @@
 module DDA
 
-using LinearAlgebra
+
+import Base: size, getindex, convert
+# import Base.CartesianIndecies
+
+# Strandrd libraries
 using StaticArrays
+using StaticArrays:SVector
+
+using LinearAlgebra
+
+# Interpolation
 using Dierckx
 # using Interpolations
-# # using Interpolations NOTE: hard to use
-# using Core: Vector
 
 import Meshes
-import Base.convert
-import Base.getindex
-import Base.CartesianIndecies
-
-using StaticArrays:SVector
 
 
 export E_inc, Permittivity, PermittivityTable, permittivity
@@ -24,7 +26,7 @@ include("interaction.jl")
 export CartesianGrid
 include("disrcetisation.jl")
 
-export Sphere, dipoles
+export Disk, Sphere, dipoles, discretize
 include("scatterer.jl")
 
 # Dipole coordinates

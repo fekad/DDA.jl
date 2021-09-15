@@ -67,6 +67,7 @@ function Base.getindex(g::CartesianGrid{Dim}, I::CartesianIndex{Dim}) where {Dim
     return coord
 end
 
+size(g::CartesianGrid) = g.dims
 
 # Simplified version of CartesianGrid
 struct CubicGrid
