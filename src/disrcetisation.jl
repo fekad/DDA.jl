@@ -1,79 +1,133 @@
-# using Base: Float64, disable_library_threading_hooks
-using LazyGrids: ndgrid
+# DDSCAT approach:
+# - lattice (basis) vector
+# - lattice spacings
+# - lattice offset
+# - integer indecies
+#
+# DDSCAT example
+#  >TARELL  ellipsoidal grain; AX,AY,AZ= 30.0000 30.0000 30.0000
+# 14328 = NAT
+# 1.000000  0.000000  0.000000 = A_1 vector
+# 0.000000  1.000000  0.000000 = A_2 vector
+# 1.000000  1.000000  1.000000 = lattice spacings (d_x,d_y,d_z)/d
+#  0.50000   0.50000   0.50000 = lattice offset x0(1-3) = (x_TF,y_TF,z_TF)/d for dipole 0 0 0
+#    JA  IX  IY  IZ ICOMP(x,y,z)
+#     1   -2   -4  -15 1 1 1
 
-abstract type AbstractGrid end
+# using Meshes: CartesianGrid
+# This implemetation is based on the CartesianGrid in Meshes.jl
+# Diferences:
+# - the elements are the centroids of the original grid elelments
+# - iterataion over coordinates (using CartesianIndecies)
+# - simplified topology
 
-import Base:length
+abstract type AbstractGrid{Dim,T} end
 
-struct CubicGrid <: AbstractGrid
-    xrange::AbstractRange
-    yrange::AbstractRange
-    zrange::AbstractRange
-    function CubicGrid(xrange, yrange, zrange)
-        @assert isapprox(step(xrange), step(yrange))
-        @assert isapprox(step(xrange), step(zrange))
-        return new(xrange, yrange, zrange)
+struct CartesianGrid{Dim,T} <: AbstractGrid{Dim,T}
+    origin::SVector{Dim,T}
+    spacing::SVector{Dim,T}
+    dims::Dims{Dim}
+
+    function CartesianGrid{Dim,T}(origin, spacing, dims) where {Dim,T}
+        @assert all(dims .> 0) "dimensions must be positive"
+        @assert all(spacing .> 0) "spacing must be positive"
+        new(origin, spacing, dims)
     end
 end
 
-CubicGrid(xmin, xmax, ymin, ymax, zmin, zmax, dx) = CubicGrid(range(xmin, xmax, step=dx), range(ymin, ymax, step=dx), range(zmin, zmax, step=dx))
+# Constructors
 
-dims(g::CubicGrid) = (length(g.xrange), length(g.yrange), length(g.zrange))
-length(g::CubicGrid) = *(dims(g)...)
+CartesianGrid(origin::SVector{Dim,T}, spacing::SVector{Dim,T}, dims::Dims{Dim}) where {Dim,T} =
+    CartesianGrid{Dim,T}(origin, spacing, dims)
+
+CartesianGrid(origin::NTuple{Dim,T}, spacing::NTuple{Dim,T}, dims::Dims{Dim}) where {Dim,T} =
+    CartesianGrid{Dim,T}(SVector(origin), SVector(spacing), dims)
+
+CartesianGrid(origin::AbstractVector{T}, spacing::AbstractVector{T}, dims::Dims{Dim}) where {Dim,T} =
+    CartesianGrid(SVector(origin...), SVector(spacing...), Dims(dims))
+
+CartesianGrid(origin::AbstractVector, spacing::AbstractVector, dims::Dims{Dim}) where {Dim} =
+    CartesianGrid(promote(origin, spacing)..., Dims(dims))
+
+# Constructors for unit step grid
+
+CartesianGrid{T}(dims::Dims{Dim}) where {Dim,T} =
+CartesianGrid{Dim,T}(zero(SVector{Dim,T}), ones(SVector{Dim,T}), dims)
+CartesianGrid{T}(dims::Vararg{Int,Dim}) where {Dim,T} = CartesianGrid{T}(dims)
+
+CartesianGrid(dims::Dims{Dim}) where {Dim} = CartesianGrid{Int}(dims)
+CartesianGrid(dims::Vararg{Int,Dim}) where {Dim} = CartesianGrid{Int}(dims)
 
 
-abstract type Scatter end
+# Indexing functions
 
-struct Sphere <: Scatter
-    radius::Float64
-    center::Vector
+Base.CartesianIndices(g::CartesianGrid{Dim}) where {Dim} = CartesianIndices(g.dims)
+function Base.getindex(g::CartesianGrid{Dim}, I::CartesianIndex{Dim}) where {Dim}
+    coord  = g.origin + (I.I .- 1) .* g.spacing
+    return coord
 end
 
-# sphere
-# disk
 
-function discretize(g::CubicGrid, s::Sphere, eps)
-    out = zeros(typeof(eps), dims(g))
-    for (i, x) in enumerate(g.xrange),
-        (j, y) in enumerate(g.yrange),
-        (k, z) in enumerate(g.zrange)
-        # @show x, xi
-        if sqrt(x^2 + y^2 + z^2) <= s.radius
-            out[i,j,k] = eps
-        end
+# Simplified version of CartesianGrid
+struct CubicGrid
+    origin::Vector{Float64}
+    spacing::Vector{Float64}
+    dims::Dims{3}
+
+    function CubicGrid(origin, spacing, dims)
+        @assert all(dims .> 0) "dimensions must be positive"
+        @assert all(spacing .> 0) "spacing must be positive"
+        # @show origin, spacing, dims
+        new(origin, spacing, dims)
     end
-    return out
-end
-eltype(CubicGrid)
-
-function positions(g::CubicGrid, s::Sphere)
-    out = Array{Float64}(undef, (3, length(g)))
-
-    # for i eachindex(g)
-
-    return [[x, y, z] for x in g.xrange, y in g.yrange, z in g.zrange if sqrt(x^2 + y^2 + z^2) <= s.radius]
-
 end
 
-g = CubicGrid(-1, 1, -1, 1, -1, 1, .1)
-# s = Sphere([0,0,0], .5)
+CubicGrid(dims::Vararg{Int,3}) = CubicGrid(zeros(3), ones(3), Dims(dims))
 
-# dipoles = discretize(g, s, 1.0 + .0im)
-# @time pos = positions(g, s)
-
+Meshes.CartesianGrid(g::CubicGrid) = Meshes.CartesianGrid{3,Float64}(g.dims, g.origin .- g.spacing / 2, g.spacing)
+convert(::Type{Meshes.CartesianGrid}, g::CubicGrid) = Meshes.CartesianGrid(g)
 
 
-struct Disk <: Scatter
-    radius::Float64
-    height::Float64
-    center::Vector
-    orientation::Vector
+@inline Base.@propagate_inbounds function Base.getindex(
+    g::CubicGrid,
+    i::Vararg{Int,3},
+)
+    #  @boundscheck checkbounds(g, i...)
+    return @. g.origin + (i - 1) * g.spacing
 end
 
+# Alternative implementations:
 
+# # more abstract
+# struct LinRange{T,L<:Integer} <: AbstractRange{T}
+#     start::T
+#     stop::T
+#     len::L
+# end
 
+# # using Base: Float64, disable_library_threading_hooks
+# using LazyGrids:ndgrid
+#
+# abstract type AbstractGrid end
+#
+# import Base:length
+#
+# struct CubicGrid <: AbstractGrid
+#     xrange::AbstractRange
+#     yrange::AbstractRange
+#     zrange::AbstractRange
+#     function CubicGrid(xrange, yrange, zrange)
+#         @assert isapprox(step(xrange), step(yrange))
+#         @assert isapprox(step(xrange), step(zrange))
+#         return new(xrange, yrange, zrange)
+#     end
+# end
 
+# CubicGrid(xmin, xmax, ymin, ymax, zmin, zmax, dx) = CubicGrid(range(xmin, xmax, step=dx), range(ymin, ymax, step=dx), range(zmin, zmax, step=dx))
+# CubicGrid(xmin, xmax, ymin, ymax, zmin, zmax, d) = ndgrid(xmin:d:xmax, ymin:d:ymax, zmin:d:zmax)
 
+# dims(g::CubicGrid) = (length(g.xrange), length(g.yrange), length(g.zrange))
+# length(g::CubicGrid) = *(dims(g)...)
 
 
 # cubic grid
@@ -102,28 +156,3 @@ end
 #     orientation::SMatrix{3,3,Float64}
 # end
 #
-#
-#
-# struct CubicGrid
-#     step
-#     xmin
-#     xmax
-#     ymin
-#     ymax
-#     zmin
-# end
-#
-#
-#
-#
-# function get_coords(grid::Grid)
-#
-# end
-
-
-#
-
-#
-# x = Linrange(0, 10, 1001)
-#
-# CubicLattice(x, y, z)
