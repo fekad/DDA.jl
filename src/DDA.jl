@@ -19,8 +19,13 @@ import Meshes
 
 export E_inc, Permittivity, PermittivityTable, permittivity
 include("permittivity.jl")
+
+export polarizability_CM, polarizability_LDR
 include("polarizability.jl")
+
+export PlaneWave, field
 include("field.jl")
+
 include("interaction.jl")
 
 export CartesianGrid

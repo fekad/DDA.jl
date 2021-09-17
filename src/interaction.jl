@@ -29,18 +29,19 @@ calc_Ajj(alpha) = Diagonal(1 / alpha * I, 3)
 
 
 
-function interaction_A(k, r, alph)
+function interaction(k, r, alpha)
     N = length(r)
     out = zeros(ComplexF64, 3, N, 3, N)
 
     for i in 1:N
-        # out[i,i,:,:] = 1/alph[i] * I
-        out[:,i,:,i] = DDA.calc_Ajj(alph[i])
+        # out[i,i,:,:] = 1/alpha[i] * I
+        out[:,i,:,i] = DDA.calc_Ajj(alpha[i])
     end
 
     for i in 2:N
         for j in 1:i - 1
-            # @show i,j
+            # @show i, j
+            # @show k, r[i], r[j]
             # @show DDA.calc_Ajk(k, r[i], r[j])
             out[:,i,:,j] = DDA.calc_Ajk(k, r[i], r[j])
         end
@@ -56,15 +57,15 @@ $$
 C_{abs} = \frac{4 \pi k}{|E_0|^2} \sum \limits_{j=1}^{N} \left\{ \mathrm{Im}(P_j \cdot (\alpha_j^{-1}) \cdot P_j^*) - \frac{2}{3} k^3|P_j|^2 \right\}
 $$
 """
-function C_abs(k, E0, Ei, P, alph)
+function C_abs(k, E0, Ei, P, alpha)
     A = 4π * k / norm(E0)^2
-    N = length(alph)
+    N = length(alpha)
     @show A
 
     C = 0
     for i in 1:N
-        C += -imag(dot(P[:,i], 1 / alph[i], P[:,i])) - 2 / 3 * k^3 * norm(P[:,i])^2
-        # C += 4π * k / norm(E0)^2 * sum(-imag(P[j]*(1/alph[j]*I)*P[j]') - 2/3 *k^3 * P[j]^2 )
+        C += -imag(dot(P[:,i], 1 / alpha[i], P[:,i])) - 2 / 3 * k^3 * norm(P[:,i])^2
+        # C += 4π * k / norm(E0)^2 * sum(-imag(P[j]*(1/alpha[j]*I)*P[j]') - 2/3 *k^3 * P[j]^2 )
         # !!!!!!!!!!!!!!
         # !dot conjugate ???
     end
@@ -85,7 +86,7 @@ $$
 C_{sca} = C_{ext} - C_{abs}
 $$
 """
-C_sca(k, E0, Ei, P, alph) = C_ext(k, E0, Ei, P) - C_abs(k, E0, Ei, P, alph)
+C_sca(k, E0, Ei, P, alpha) = C_ext(k, E0, Ei, P) - C_abs(k, E0, Ei, P, alpha)
 
 
 @doc raw"""

@@ -129,6 +129,6 @@ A_exp = [
         0.000000 + 0.000000im, 10614.70 - 3193.380im]
 ]
 
-A = interaction_A(k, r, alph, blockdiag)
+A = interaction(k, r, alph, blockdiag)
 
 @test isapprox(A, A_exp; rtol=1e-4)

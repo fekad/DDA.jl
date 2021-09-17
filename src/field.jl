@@ -1,5 +1,5 @@
 
-abstract type EField end
+abstract type Field end
 
 # """
 # Incident wave:
@@ -17,22 +17,25 @@ abstract type EField end
 
 
 
-
-
-struct PlaneWave <: EField
-    E0
-    e
-    k
+struct PlaneWave <: Field
+    E₀::SVector{3,Float64}
+    k::SVector{3,Float64}
 end
 
-field(r, E::PlaneWave) = E.E0 * exp(-im * dot(E.k, r))
-# field(r::Matrix, E::PlaneWave) = [field(ri, E) for ri in eachcol(r)]
+function field(r, k, E₀)
+    return E₀ * exp(-im * dot(k, r))
+end
 
-function field(r::AbstractArray, e::PlaneWave)
-    out = Array{ComplexF64}(undef, size(r))
+function field(r, E::PlaneWave)
+    return field(r, E.E₀, E.k)
+end
+
+function field(r::Vector{SVector{3, Float64}}, e::PlaneWave)
+    out = Array{ComplexF64}(undef, (3, length(r)))
     for i in eachindex(r)
-        out[i] = field(r[i], e)
+        out[:,i] = field(r[i], e)
     end
+    return out
 end
 
 # E_inc(r, E::PlaneWave) = E.E0 * exp(-im * E.k)
@@ -44,17 +47,15 @@ end
 #
 
 
-
-
-function E_inc(E0, kvec, r)
-    Ei = zeros(ComplexF64, 3, length(r))
-
-    for (i, ri) in enumerate(r)
-        Ei[:,i] = E0 .* exp.(im * dot(kvec, ri))
-    end
-
-    return reshape(Ei,:)
-end
+# function E_inc(E0, kvec, r)
+#     Ei = zeros(ComplexF64, 3, length(r))
+#
+#     for (i, ri) in enumerate(r)
+#         Ei[:,i] = E0 .* exp.(im * dot(kvec, ri))
+#     end
+#
+#     return reshape(Ei, :)
+# end
 
 
 
