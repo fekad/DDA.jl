@@ -75,6 +75,34 @@ xlims!(-200, 200); ylims!(-200, 200); zlims!(-200, 200)
 
 
 
+
+
+# target: Au disk
+# d = 10 nm
+# height = 1 nm (5 dipoles)
+# # of dipoles along the diameter: 50
+# grid spacing: d = 0.2 nm
+# spaceing: d = (1) 0.2 nm, (2) 0.4 nm, (5) 1 nm,  (100) 20 nm
+# >> peak resonance at ??? nm
+# # of dipoles: 9880?
+
+
+
+g = CartesianGrid([0.1, 0.1, 0], [.2, .2, .2], (50, 50, 5))
+s = Disk(5, 1, [5, 5, 0 ])
+r = dipoles(g, s)
+rr = reduce(hcat, r)
+
+# gr()
+plotlyjs()
+scatter(rr[1,:],rr[2,:],rr[3,:], aspect_ratio=:auto)
+xlims!(0, 10); ylims!(0, 10); zlims!(0, 10)
+
+
+
+
+
+
 # 2. assign the polarizability αj to each dipole,
 
 E₀ = [1, 0, 0]
