@@ -1,6 +1,9 @@
 # using Plots
 # plotlyjs()
 
+# Material models
+# Dielectrics and Conductors: This includes perfect (lossless) dielectrics, conductive (lossy) materials, and perfect electric conductors.
+# \varepsilon (\omega) = \varepsilon 
 
 # Permittivity
 # Electric susceptibility
@@ -29,11 +32,13 @@ abstract type TablePermittivity <: AbstractPermittivity end
 struct Permittivity{T<:Number} <: ConstantPermittivity
     eps::T
 end
+
 permittivity(e::Permittivity) = e.eps
 permittivity(e::Permittivity, lambda) = permittivity(e)
 
+struct DrudeModel
 
-
+end
 
 # Interpolated frequency dependent permitivirty
 struct PermittivityTable <: TablePermittivity
