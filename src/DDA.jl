@@ -34,6 +34,9 @@ include("disrcetisation.jl")
 export Disk, Sphere, dipoles, discretize
 include("scatterer.jl")
 
+
+include("MaterialModels.jl")
+
 # Dipole coordinates
 # Polarizability
 # Solver

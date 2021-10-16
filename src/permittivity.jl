@@ -1,12 +1,17 @@
 # using Plots
 # plotlyjs()
 
-# Material models
+#=[md]
+Material models
 # Dielectrics and Conductors: This includes perfect (lossless) dielectrics, conductive (lossy) materials, and perfect electric conductors.
-# \varepsilon (\omega) = \varepsilon 
+# $$ \varepsilon (\omega) = \varepsilon $$
 
 # Permittivity
 # Electric susceptibility
+=#
+
+
+
 
 abstract type AbstractPermittivity end
 abstract type ConstantPermittivity <: AbstractPermittivity end
