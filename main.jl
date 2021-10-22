@@ -42,6 +42,15 @@ plotlyjs()
 
 # 1. create the coordinates of the dipoles,
 
+g = CartesianGrid([1/6,1/6,1/6], 1/3*ones(3), (30, 30, 30))
+s = Sphere(5., [5, 5, 5])
+r = dipoles(g, s)
+
+rr = reduce(hcat, r)
+scatter3d(rr[1,:],rr[2,:],rr[3,:])
+
+
+
 g = CartesianGrid([1.5,1.5,1.5], 3*ones(3), (30, 30, 30))
 s = Sphere(15., [15, 15, 15])
 r = dipoles(g, s)
@@ -66,8 +75,6 @@ g = CartesianGrid([-200, -200, -200], 40*ones(3), (11, 11, 11))
 s = Sphere(200., [0, 0, 0])
 r = dipoles(g, s)
 rr = reduce(hcat, r)
-
-
 # gr()
 plotlyjs()
 scatter(rr[1,:],rr[2,:],rr[3,:], aspect_ratio=:auto)
@@ -86,6 +93,16 @@ xlims!(-200, 200); ylims!(-200, 200); zlims!(-200, 200)
 # >> peak resonance at ??? nm
 # # of dipoles: 9880?
 
+
+d = 1/3
+g = CartesianGrid([d/2, d/2, 0], d*ones(3), (30, 30, 3))
+s = Disk(5., 1, [5, 5, 0])
+r = dipoles(g, s)
+rr = reduce(hcat, r)
+
+plotlyjs()
+scatter(rr[1,:],rr[2,:],rr[3,:], aspect_ratio=:auto)
+xlims!(0, 10); ylims!(0, 10); zlims!(0, 10)
 
 
 g = CartesianGrid([0.1, 0.1, 0], [.2, .2, .2], (50, 50, 5))

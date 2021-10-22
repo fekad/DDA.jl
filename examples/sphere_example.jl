@@ -28,7 +28,7 @@ E_inc = E_inc()
 
 # grid and target
 r = 22
-d = 2r/30
+d = 2r/15
 
 s = Sphere(r, [0,0,0])
 # @. ((1:30) - .5) * d - r ≈ -r + d/2:d:r - d/2
