@@ -200,14 +200,23 @@ function mie_ab(m, x, nmax)
 end
 
 
-mie_scattering(1.33 + 0.01im, 870., 0.)
-mie_scattering(1.33 + 0.01im, 870., 50.)
+mie_scattering(1.33 + 0.1im, 870., 0.)
+mie_scattering(1.33 + 0.1im, 870., 50.)
 mie_scattering(1.5 + 0.5im,532,200)
 
 
-lambda = LinRange(400, 1000, 1001)
-qext =  [mie_scattering(1.33 + 0.01im, l, 100.)[2] for l in lambda]
+lambda = LinRange(10, 1000, 1001)
+qext =  [mie_scattering(1.33 + 0.0im, l, 50.)[1] for l in lambda]
 plot(lambda, qext)
+
+
+
+# m1 = 1.33; # relative refractive index of water
+m1 = 1.33 + .1i;   # imag. component to demonstrate absorption
+k = 2 * pi;          # wave number
+d = 1 / (abs(m1) * k); # lattice spacing
+
+
 
 
 
@@ -364,6 +373,83 @@ plot(
 )
 plot!(theta, SR, yaxis=:log, label="Perpendicular Polarization")
 plot!(theta, SU, yaxis=:log, label="Unpolarized")
+
+
+
+
+
+m1 = 1.33; # relative refractive index of water
+# m1 = 1.33 + .1im   # imag. component to demonstrate absorption
+k = 2 * pi          # wave number
+d = 1 / (abs(m1) * k) # lattice spacing
+
+# number of dipoles in the approximate sphere; more is required as the
+# radius increases
+nrange = [8, 32, 136, 280, 552, 912, 1472, 2176, 3112, 4224, 5616, 7208, 9328, 11536];
+# nrange = [8, 32, 136, 280, 552, 912, 1472]
+
+# the corresponding effective radii of the spheres
+a_eff = (3 * nrange / 4π).^(1 / 3) * d
+
+arange = range(a_eff[1], a_eff[end], length=1001)
+
+λ = 2π / k
+Q = zeros(length(arange), 3)
+for (i, a) = enumerate(arange)
+    # @show (i, a)
+    r = mie_scattering(m1, λ, 2.1 * a)
+    Q[i,:] .= r[1:3]
+end
+
+# Here, we plot the efficiencies Q instead of the cross sections C
+# Q = C/(pi*r^2)
+plot(k * arange, Q;
+    labels=["Q_{ext}" "Q_{abs}" "Q_{scat}"],
+    title="m = $m1"
+    )
+ylabel!("Q")
+xlabel!("2 π a λ") # size parameter ka
+
+
+
+nothing
+
+
+# m1 = 1.33; # relative refractive index of water
+m1 = 1.33 + .1im   # imag. component to demonstrate absorption
+k = 2 * pi          # wave number
+d = 1 / (abs(m1) * k) # lattice spacing
+
+# number of dipoles in the approximate sphere; more is required as the
+# radius increases
+nrange = [8, 32, 136, 280, 552, 912, 1472, 2176, 3112, 4224, 5616, 7208, 9328, 11536];
+# nrange = [8, 32, 136, 280, 552, 912, 1472]
+
+# the corresponding effective radii of the spheres
+a_eff = (3 * nrange / 4π).^(1 / 3) * d
+
+arange = range(a_eff[1], a_eff[end], length=1001)
+
+λ = 2π / k
+Q = zeros(length(arange), 3)
+for (i, a) = enumerate(arange)
+    # @show (i, a)
+    r = mie_scattering(m1, λ, 2.1 * a)
+    Q[i,:] .= r[1:3]
+end
+
+# Here, we plot the efficiencies Q instead of the cross sections C
+# Q = C/(pi*r^2)
+plot(k * arange, Q;
+    labels=["Q_{ext}" "Q_{abs}" "Q_{scat}"],
+    title="m = $m1"
+    )
+ylabel!("Q")
+xlabel!("2 π a λ") # size parameter ka
+
+
+
+
 
 
 
