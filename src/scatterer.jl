@@ -1,5 +1,4 @@
 abstract type Scatter end
-
 # TODO:
 # - defintion of material of the scatterers
 

@@ -12,7 +12,7 @@
 # 1.000000  1.000000  1.000000 = lattice spacings (d_x,d_y,d_z)/d
 #  0.50000   0.50000   0.50000 = lattice offset x0(1-3) = (x_TF,y_TF,z_TF)/d for dipole 0 0 0
 #    JA  IX  IY  IZ ICOMP(x,y,z)
-#     1   -2   -4  -15 1 1 1
+#     1  -2  -4 -15 1 1 1
 
 # using Meshes: CartesianGrid
 # This implemetation is based on the CartesianGrid in Meshes.jl

@@ -15,8 +15,6 @@ abstract type Field end
 # left and right hand circular polarized VS the orthonormal Cartesian vectors ex and ey
 
 
-
-
 struct PlaneWave <: Field
     E₀::SVector{3,Float64}
     k::SVector{3,Float64}
@@ -47,15 +45,15 @@ end
 #
 
 
-# function E_inc(E0, kvec, r)
-#     Ei = zeros(ComplexF64, 3, length(r))
-#
-#     for (i, ri) in enumerate(r)
-#         Ei[:,i] = E0 .* exp.(im * dot(kvec, ri))
-#     end
-#
-#     return reshape(Ei, :)
-# end
+function E_inc(E0, kvec, r)
+    Ei = zeros(ComplexF64, 3, length(r))
+
+    for (i, ri) in enumerate(r)
+        Ei[:,i] = E0 .* exp.(im * dot(kvec, ri))
+    end
+
+    return reshape(Ei, :)
+end
 
 
 
