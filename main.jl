@@ -37,6 +37,15 @@ plotlyjs()
 # 4. assemble the interaction matrix A and
 # 5. solve for P in the system of linear equations
 
+# NOTE: the dimension of the grid shouldn't matter.
+#  - but it hard to wald throught the whole space
+#  - based on the scatterer create the grid using extremas (like bounding box)
+g = CartesianGrid([-20.5,-20.5,-20.5], ones(3), (41, 41, 41))
+for i in 1:16
+    s = Sphere(i, [0, 0, 0])
+    r = dipoles(g, s)
+    @show i, length(r)
+end
 
 
 
