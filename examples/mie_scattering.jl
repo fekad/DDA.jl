@@ -211,12 +211,6 @@ plot(lambda, qext)
 
 
 
-# m1 = 1.33; # relative refractive index of water
-m1 = 1.33 + .1i;   # imag. component to demonstrate absorption
-k = 2 * pi;          # wave number
-d = 1 / (abs(m1) * k); # lattice spacing
-
-
 
 
 
@@ -378,14 +372,25 @@ plot!(theta, SU, yaxis=:log, label="Unpolarized")
 
 
 
-m1 = 1.33; # relative refractive index of water
+
+
+
+
+
+
+
+
+
+# Matlab implementaion article
+
+m1 = 1.33 # relative refractive index of water
 # m1 = 1.33 + .1im   # imag. component to demonstrate absorption
 k = 2 * pi          # wave number
 d = 1 / (abs(m1) * k) # lattice spacing
 
-# number of dipoles in the approximate sphere; more is required as the
+# number of dipoles in the approximate sphere more is required as the
 # radius increases
-nrange = [8, 32, 136, 280, 552, 912, 1472, 2176, 3112, 4224, 5616, 7208, 9328, 11536];
+nrange = [8, 32, 136, 280, 552, 912, 1472, 2176, 3112, 4224, 5616, 7208, 9328, 11536]
 # nrange = [8, 32, 136, 280, 552, 912, 1472]
 
 # the corresponding effective radii of the spheres
@@ -408,21 +413,21 @@ plot(k * arange, Q;
     title="m = $m1"
     )
 ylabel!("Q")
-xlabel!("2 π a λ") # size parameter ka
+xlabel!("2 π a / λ") # size parameter ka
 
 
 
 nothing
 
 
-# m1 = 1.33; # relative refractive index of water
+# m1 = 1.33 # relative refractive index of water
 m1 = 1.33 + .1im   # imag. component to demonstrate absorption
 k = 2 * pi          # wave number
 d = 1 / (abs(m1) * k) # lattice spacing
 
-# number of dipoles in the approximate sphere; more is required as the
+# number of dipoles in the approximate sphere more is required as the
 # radius increases
-nrange = [8, 32, 136, 280, 552, 912, 1472, 2176, 3112, 4224, 5616, 7208, 9328, 11536];
+nrange = [8, 32, 136, 280, 552, 912, 1472, 2176, 3112, 4224, 5616, 7208, 9328, 11536]
 # nrange = [8, 32, 136, 280, 552, 912, 1472]
 
 # the corresponding effective radii of the spheres
@@ -445,7 +450,7 @@ plot(k * arange, Q;
     title="m = $m1"
     )
 ylabel!("Q")
-xlabel!("2 π a λ") # size parameter ka
+xlabel!("2 π a / λ") # size parameter ka
 
 
 
@@ -454,3 +459,96 @@ xlabel!("2 π a λ") # size parameter ka
 
 
 
+
+
+
+
+
+
+
+
+# Draine1991 examples:
+
+m1 = 1.33 + .01im   # imag. component to demonstrate absorption
+# m1 = 2 + 1im   # imag. component to demonstrate absorption
+k = 1          # wave number
+
+
+arange = range(0, 13, length=1001)
+
+# WHY??? why not?: λ = 2π / k
+λ = 2π / k / 2
+Q = zeros(length(arange), 3)
+for (i, a) = enumerate(arange)
+    r = mie_scattering(m1, λ, a)
+    Q[i,:] .= r[1:3]
+end
+
+# Here, we plot the efficiencies Q instead of the cross sections C
+# Q = C/(pi*r^2)
+plot(k * arange, Q;
+    labels=["Q_{ext}" "Q_{abs}" "Q_{scat}"],
+    title="m = $m1",
+    yscale=:log,
+    ylims=(0.005, maximum(Q))
+    )
+ylabel!("Q")
+xlabel!("2 π a / λ") # size parameter ka
+
+nothing #
+
+m1 = 2 + 1im   # complex refractive index!!!
+k = 1          # wave number
+
+
+arange = range(0, 13, length=1001)
+
+# WHY??? why not?: λ = 2π / k
+λ = 2π / k / 2
+Q = zeros(length(arange), 3)
+for (i, a) = enumerate(arange)
+    r = mie_scattering(m1, λ, a)
+    Q[i,:] .= r[1:3]
+end
+
+# Here, we plot the efficiencies Q instead of the cross sections C
+# Q = C/(pi*r^2)
+plot(k * arange, Q;
+    labels=["Q_{ext}" "Q_{abs}" "Q_{scat}"],
+    title="m = $m1",
+    yscale=:log,
+    ylims=(0.005, maximum(Q))
+    )
+ylabel!("Q")
+xlabel!("2 π a / λ") # size parameter ka
+
+
+
+
+
+
+# phase function demo for a water sphere
+
+
+m = 1.33 + 0.01im
+# m = 1.33
+m = 3 + 4im
+
+k = 2π
+# WHY 2*
+d = 2 * 5 / k
+
+λ = 2π/k
+theta = range(0,π, length=1000)
+
+SL, SR, SU = scattering_function(theta, m, λ, d)
+
+plot(
+    theta*180/π, SL,
+    label="Parallel Polarization",
+    ylabel="Intensity (\$|S|^2}\$)",
+    xlabel="phase angle ϴ",
+    yaxis=:log
+)
+plot!(theta*180/π, SR, label="Perpendicular Polarization")
+# plot!(theta*180/π, SU, label="Unpolarized")

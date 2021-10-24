@@ -1,5 +1,6 @@
 using Revise
 using DDA
+using LinearAlgebra
 
 using Plots
 plotlyjs()
@@ -41,8 +42,21 @@ lambda = 550.
 solve(dipoles, E_inc)
 
 
+g = CartesianGrid([-16.5,-16.5,-16.5], ones(3), (33, 33, 33))
+s = Sphere(16., [0, 0, 0])
+S = dipoles(g, s)
+N = length(S)
 
+g = CartesianGrid([-17,-17,-17], ones(3), (34, 34, 34))
+s = Sphere(16., [0, 0, 0])
+S = dipoles(g, s)
+N = length(S)
 
+# DDSCAT 32x32x32 grid, sphere N=17904 dipoles
+g = CartesianGrid([-16.,-16., -16.], ones(3), (32, 32, 32))
+s = Sphere(16, 0 * ones(3))
+S = dipoles(g, s)
+N = length(S)
 
 
 
@@ -53,7 +67,8 @@ E0 = [1., 1, 0]
 m1 = 1.33 # relative refractive index of water
 # m1 = 1.33 + .1im   # imag. component to demonstrate absorption
 k = 2π          # wave number
-d = 1 / (abs(m1) * k) # lattice spacing
+kvec = [0, 0, k]
+d =  1 / (abs(m1) * k) # lattice spacing
 
 
 # number of dipoles in the approximate sphere; more is required as the
@@ -62,68 +77,79 @@ d = 1 / (abs(m1) * k) # lattice spacing
 # nrange = [8 32 136 280 552 912 1472 2176 3112 4224 5616 7208 9328 11536]
 g = CartesianGrid([-20.5,-20.5,-20.5], ones(3), (41, 41, 41))
 
+rrange = 1.:12.
+# rrange = 1.:14.
+
+aeff = zeros(length(rrange))
+Cext = zeros(length(rrange))
+Cabs = zeros(length(rrange))
+Cscat = zeros(length(rrange))
 
 
-aeff = zeros(length(nrange))
-Cext = zeros(length(nrange))
-Cabs = zeros(length(nrange))
-Cscat = zeros(length(nrange))
+# (ix, R) = first(enumerate(rrange))
+for (ix, R) = enumerate(rrange)
 
-Rrange = 1.:14.
-# for (ix, R) = enumerate(Rrange)
-(ix, R) = first(enumerate(Rrange))
 
-# 1. calculated the incident field E_inc, at each dipole,
+    # 1. create the coordinates of the dipoles,
 
-kvec = [0, 0, k]
-Ei = E_inc(E0, kvec, r)
+    s = Sphere(R, [0, 0, 0])
+    S = dipoles(g, s)
+    N = length(S)
 
-# 2. create the coordinates of the dipoles,
+    r = d * S # scaling
 
-s = Sphere(R, [0, 0, 0])
-S = dipoles(g, s)
-N = length(S)
+    # the corresponding effective radii of the spheres
+    aeff[ix] = d * (3 * N / 4π).^(1 / 3)
 
-r = d * S # scaling
+    # memory usage (9N^2):
+    mem_MB =  3 * 3 * N^2 * 2 * 64 / 8 / 1024^2
+    @show R, N, mem_MB
 
-# 3. assign the polarizability αj to each dipole,
+    # 2. assign the polarizability αj to each dipole,
+    # m not equal eps !!! m^2 = eps
+    m = m1^2 * ones(3N)
+    alph = [DDA.polarizability_LDR(mi, d, kvec, E0) for mi in m]
 
-m = m1 * ones(N)
-alph = [DDA.polarizability_LDR(mi, d, kvec, E0) for mi in m]
+    # 3. calculated the incident field E_inc, at each dipole,
 
-# 4. assemble the interaction matrix A and
-using LinearAlgebra
-A = DDA.interaction(norm(k), r, alph)
 
-# 5. solve for P in the system of linear equations
+    Ei = E_inc(E0, kvec, r)
 
-P = A \ Ei
-# P = gmres(A, Ei)
-# P = minres(A,Ei)
-# P = qmr(A,Ei)
 
-# 5. collect results
+    # 4. assemble the interaction matrix A and
+    A = DDA.interaction(norm(k), r, alph)
 
-# # the corresponding effective radii of the spheres
-aeff[ix] = d * (3 * N / 4π).^(1 / 3)
+    # 5. solve for P in the system of linear equations
 
-Cext[ix] = DDA.C_ext(k, E0, Ei, P)
-Cabs[ix] = DDA.C_abs(k, E0, Ei, P, alph)
-Cscat[ix] = Cext[ix] - Cabs[ix]
-# end
+    P = A \ Ei
+    # P = gmres(A, Ei)
+    # P = minres(A,Ei)
+    # P = qmr(A,Ei)
+
+    P = reshape(P, 3, :)
+    alph = reshape(alph, 3, :)
+    # 5. collect results
+
+
+    Cext[ix] = DDA.C_ext(k, E0, Ei, P)
+    Cabs[ix] = DDA.C_abs(k, E0, Ei, P, alph)
+    Cscat[ix] = Cext[ix] - Cabs[ix]
+end
 
 
 # # Here, we plot the efficiencies Q instead of the cross sections C
 # # Q = C/(pi*r^2)
-# plot(k*arange,Cext./(pi*arange.^2),'*')
-# plot(k*arange,Cabs./(pi*arange.^2),'x')
-# plot(k*arange,Cscat./(pi*arange.^2),'o')
-# legend('Q_{ext}','Q_{abs}','Q_{scat}',0,0)
-# ylabel('Q')
-# xlabel('2\pia/\lambda') # size parameter ka
-# title(['m = ' num2str(m1)])
+# plot(k * aeff, Cext ./ (pi * aeff.^2),"*")
+# plot!(k * aeff, Cabs ./ (pi * aeff.^2),"x")
+# plot!(k * aeff, Cscat ./ (pi * aeff.^2),"o")
 
 
+plot(k * aeff, Cext ./ (π * aeff.^2), label="Q_{ext}", title="m = $m1")
+plot!(k * aeff, Cabs ./ (π * aeff.^2), label="Q_{abs}")
+plot!(k * aeff, Cscat ./ (π * aeff.^2), label="Q_{scat}")
+
+ylabel!("Q")
+xlabel!("2π a/λ ") # size parameter ka
 
 
 
@@ -168,6 +194,7 @@ Esca_S = zeros(length(theta_range))
 Esca_P = zeros(length(theta_range))
 Einc_S = zeros(length(theta_range))
 Einc_P = zeros(length(theta_range))
+
 #
 # for (ix, theta) = enumerate(theta_range)
 #

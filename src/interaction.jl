@@ -25,17 +25,17 @@ function calc_Ajk(k, rj, rk)
     return A_jk
 end
 
-calc_Ajj(alpha) = Diagonal(1 / alpha * I, 3)
+calc_Ajj(alph) = Diagonal(1 / alph * I, 3)
 
 
 
-function interaction(k, r, alpha)
+function interaction(k, r, alph)
     N = length(r)
     out = zeros(ComplexF64, 3, N, 3, N)
 
     for i in 1:N
-        # out[i,i,:,:] = 1/alpha[i] * I
-        out[:,i,:,i] = DDA.calc_Ajj(alpha[i])
+        # out[i,i,:,:] = 1/alph[i] * I
+        out[:,i,:,i] = DDA.calc_Ajj(alph[i])
     end
 
     for i in 2:N
@@ -54,18 +54,18 @@ end
 @doc raw"""
 The absorption cross section:
 $$
-C_{abs} = \frac{4 \pi k}{|E_0|^2} \sum \limits_{j=1}^{N} \left\{ \mathrm{Im}(P_j \cdot (\alpha_j^{-1}) \cdot P_j^*) - \frac{2}{3} k^3|P_j|^2 \right\}
+C_{abs} = \frac{4 \pi k}{|E_0|^2} \sum \limits_{j=1}^{N} \left\{ \mathrm{Im}(P_j \cdot (\alph_j^{-1}) \cdot P_j^*) - \frac{2}{3} k^3|P_j|^2 \right\}
 $$
 """
-function C_abs(k, E0, Ei, P, alpha)
+function C_abs(k, E0, Ei, P, alph)
     A = 4π * k / norm(E0)^2
-    N = length(alpha)
-    @show A
+    N = size(alph,2)
+    # @show A
 
     C = 0
     for i in 1:N
-        C += -imag(dot(P[:,i], 1 / alpha[i], P[:,i])) - 2 / 3 * k^3 * norm(P[:,i])^2
-        # C += 4π * k / norm(E0)^2 * sum(-imag(P[j]*(1/alpha[j]*I)*P[j]') - 2/3 *k^3 * P[j]^2 )
+        C += -imag(dot(P[:,i], 1 / alph[i], P[:,i])) - 2 / 3 * k^3 * norm(P[:,i])^2
+        # C += 4π * k / norm(E0)^2 * sum(-imag(P[j]*(1/alph[j]*I)*P[j]') - 2/3 *k^3 * P[j]^2 )
         # !!!!!!!!!!!!!!
         # !dot conjugate ???
     end
@@ -86,7 +86,7 @@ $$
 C_{sca} = C_{ext} - C_{abs}
 $$
 """
-C_sca(k, E0, Ei, P, alpha) = C_ext(k, E0, Ei, P) - C_abs(k, E0, Ei, P, alpha)
+C_sca(k, E0, Ei, P, alph) = C_ext(k, E0, Ei, P) - C_abs(k, E0, Ei, P, alph)
 
 
 @doc raw"""
