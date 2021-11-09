@@ -23,6 +23,7 @@ include("permittivity.jl")
 export polarizability_CM, polarizability_LDR
 include("polarizability.jl")
 
+using Rotations: RotZY
 export PlaneWave, field
 include("field.jl")
 
