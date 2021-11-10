@@ -1,8 +1,6 @@
 using DDA
-
 using Plots
-
-plotlyjs()
+# plotlyjs()
 
 # Target:
 # r = 22 nm
@@ -23,7 +21,7 @@ plotlyjs()
 E0 = 1
 k = [0, 0, 1]
 e = [1, 0, 0]
-E_inc = E_inc()
+E_inc = DDA.E_inc()
 
 
 # grid and target

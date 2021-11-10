@@ -105,8 +105,8 @@ text!(scene, "|A>", textsize=30, position = Point3f0(0,-1.4, 0), align = (:cente
 
 
 
-arrows!(scene, [Point3f0(0)], [Point3f0(0,0,1 - arrowsize)], arrowsize=arrowsize)
-arrows!(scene, [Point3f0(0)], [Point3f0(0,1 - arrowsize,0)], arrowsize=arrowsize, color = :red)
+# arrows!(scene, [Point3f0(0)], [Point3f0(0,0,1 - arrowsize)], arrowsize=arrowsize)
+arrows!(scene, [Point3f0(0)], [Point3f0(1 - arrowsize,0,0)], arrowsize=arrowsize, color = :red)
 
 display(scene)
 

@@ -1,6 +1,6 @@
 using DDA
 
-using plot
+using Plots
 
 # target: Au disk
 # d = 10 nm

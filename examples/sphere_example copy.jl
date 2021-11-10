@@ -1,9 +1,10 @@
-using Revise
-using DDA
+using Plots
 using LinearAlgebra
 
-using Plots
-plotlyjs()
+using Revise
+using DDA
+
+# plotlyjs()
 
 
 # steps:
