@@ -1,10 +1,9 @@
-abstract type Scatter end
 # TODO:
 # - defintion of material of the scatterers
 
-struct Sphere <: Scatter
-    radius::Float64
+struct Sphere <: AbstractTarget
     center::SVector{3,Float64}
+    radius::Float64
 end
 
 
@@ -18,10 +17,10 @@ function isinside(x::Real, y::Real, z::Real, s::Sphere)
 end
 
 
-struct Disk <: Scatter
+struct Disk <: AbstractTarget
+    center::SVector{3,Float64}
     radius::Float64
     height::Float64
-    center::SVector{3,Float64}
 end
 
 
@@ -36,7 +35,7 @@ function isinside(x::Real, y::Real, z::Real, s::Disk)
 end
 
 
-function dipoles(g::CartesianGrid, s::Scatter)
+function dipoles(g::CartesianGrid, s::AbstractTarget)
     inds = CartesianIndices(g)
     out = SVector{3,Float64}[]
     for ind in inds
@@ -50,7 +49,7 @@ end
 
 
 
-function discretize(g::CartesianGrid, s::Scatter)
+function discretize(g::CartesianGrid, s::AbstractTarget)
 
     eps = 1
     out = zeros(typeof(eps), size(g))

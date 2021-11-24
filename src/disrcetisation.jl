@@ -21,7 +21,6 @@
 # - iterataion over coordinates (using CartesianIndecies)
 # - simplified topology
 
-abstract type AbstractGrid{Dim,T} end
 
 struct CartesianGrid{Dim,T} <: AbstractGrid{Dim,T}
     origin::SVector{Dim,T}
@@ -69,128 +68,130 @@ end
 
 size(g::CartesianGrid) = g.dims
 
-# Simplified version of CartesianGrid
-struct CubicGrid
-    origin::Vector{Float64}
-    spacing::Vector{Float64}
-    dims::Dims{3}
-
-    function CubicGrid(origin, spacing, dims)
-        @assert all(dims .> 0) "dimensions must be positive"
-        @assert all(spacing .> 0) "spacing must be positive"
-        # @show origin, spacing, dims
-        new(origin, spacing, dims)
-    end
-end
-
-CubicGrid(dims::Vararg{Int,3}) = CubicGrid(zeros(3), ones(3), Dims(dims))
-
-Meshes.CartesianGrid(g::CubicGrid) = Meshes.CartesianGrid{3,Float64}(g.dims, g.origin .- g.spacing / 2, g.spacing)
-convert(::Type{Meshes.CartesianGrid}, g::CubicGrid) = Meshes.CartesianGrid(g)
-
-
-@inline Base.@propagate_inbounds function Base.getindex(
-    g::CubicGrid,
-    i::Vararg{Int,3},
-)
-    #  @boundscheck checkbounds(g, i...)
-    return @. g.origin + (i - 1) * g.spacing
-end
-
-# Alternative implementations:
-
-# # more abstract
-# struct LinRange{T,L<:Integer} <: AbstractRange{T}
-#     start::T
-#     stop::T
-#     len::L
-# end
-
-# # using Base: Float64, disable_library_threading_hooks
-# using LazyGrids:ndgrid
+# import Meshes
 #
-# abstract type AbstractGrid end
+# # Simplified version of CartesianGrid
+# struct CubicGrid
+#     origin::Vector{Float64}
+#     spacing::Vector{Float64}
+#     dims::Dims{3}
 #
-# import Base:length
-#
-# struct CubicGrid <: AbstractGrid
-#     xrange::AbstractRange
-#     yrange::AbstractRange
-#     zrange::AbstractRange
-#     function CubicGrid(xrange, yrange, zrange)
-#         @assert isapprox(step(xrange), step(yrange))
-#         @assert isapprox(step(xrange), step(zrange))
-#         return new(xrange, yrange, zrange)
+#     function CubicGrid(origin, spacing, dims)
+#         @assert all(dims .> 0) "dimensions must be positive"
+#         @assert all(spacing .> 0) "spacing must be positive"
+#         # @show origin, spacing, dims
+#         new(origin, spacing, dims)
 #     end
 # end
-
-# CubicGrid(xmin, xmax, ymin, ymax, zmin, zmax, dx) = CubicGrid(range(xmin, xmax, step=dx), range(ymin, ymax, step=dx), range(zmin, zmax, step=dx))
-# CubicGrid(xmin, xmax, ymin, ymax, zmin, zmax, d) = ndgrid(xmin:d:xmax, ymin:d:ymax, zmin:d:zmax)
-
-# dims(g::CubicGrid) = (length(g.xrange), length(g.yrange), length(g.zrange))
-# length(g::CubicGrid) = *(dims(g)...)
-
-
-# cubic grid
-# - step size (dx == dy == dz)
-# - start(3) stop(3) step()
-# - start(3) stop(3)
-
-# struct CubicGrid <: AbstractGrid
-#     xi::StepRangeLen
-#     yi::StepRangeLen
-#     zi::StepRangeLen
-# end
-# origin(g::CubicGrid) = [g.xi[1], g.yi[1], g.zi[1]]
-# dims(g::CubicGrid) = (length(g.xi), length(g.yi), length(g.zi))
-
-# struct CubicLattice <: AbstractGrid
-#     origin::SVector{3,Float64}
-#     dims::SVector{3,Int64}
-#     spacing::Float64
+#
+# CubicGrid(dims::Vararg{Int,3}) = CubicGrid(zeros(3), ones(3), Dims(dims))
+#
+# Meshes.CartesianGrid(g::CubicGrid) = Meshes.CartesianGrid{3,Float64}(g.dims, g.origin .- g.spacing / 2, g.spacing)
+# convert(::Type{Meshes.CartesianGrid}, g::CubicGrid) = Meshes.CartesianGrid(g)
+#
+#
+# @inline Base.@propagate_inbounds function Base.getindex(
+#     g::CubicGrid,
+#     i::Vararg{Int,3},
+# )
+#     #  @boundscheck checkbounds(g, i...)
+#     return @. g.origin + (i - 1) * g.spacing
 # end
 #
-# struct RotatadCubicLattice <: AbstractGrid
-#     start::SVector{3,Float64}
-#     length::SVector{3,Int64}
-#     step::Float64
-#     orientation::SMatrix{3,3,Float64}
-# end
+# # Alternative implementations:
 #
-
-# # https://juliageometry.github.io/Meshes.jl/stable/meshes.html#Meshes.CartesianGrid
-# # https://github.com/JuliaGeometry/Meshes.jl/blob/master/src/mesh/cartesiangrid.jl
-# # https://juliaarrays.github.io/LazyGrids.jl/stable/examples/1-ndgrid/#D-case
+# # # more abstract
+# # struct LinRange{T,L<:Integer} <: AbstractRange{T}
+# #     start::T
+# #     stop::T
+# #     len::L
+# # end
 #
+# # # using Base: Float64, disable_library_threading_hooks
+# # using LazyGrids:ndgrid
+# #
+# # abstract type AbstractGrid end
+# #
+# # import Base:length
+# #
+# # struct CubicGrid <: AbstractGrid
+# #     xrange::AbstractRange
+# #     yrange::AbstractRange
+# #     zrange::AbstractRange
+# #     function CubicGrid(xrange, yrange, zrange)
+# #         @assert isapprox(step(xrange), step(yrange))
+# #         @assert isapprox(step(xrange), step(zrange))
+# #         return new(xrange, yrange, zrange)
+# #     end
+# # end
 #
-# module StructuredGrids
+# # CubicGrid(xmin, xmax, ymin, ymax, zmin, zmax, dx) = CubicGrid(range(xmin, xmax, step=dx), range(ymin, ymax, step=dx), range(zmin, zmax, step=dx))
+# # CubicGrid(xmin, xmax, ymin, ymax, zmin, zmax, d) = ndgrid(xmin:d:xmax, ymin:d:ymax, zmin:d:zmax)
 #
-# import Base: axes, getindex, size
-#
-# using Base: tail, @propagate_inbounds
-#
-# export grid
-#
-# struct Grid{T,N,RT} <: AbstractArray{T,N}
-#     ranges::RT
-# end
-#
-# @inline eltypes(::Tuple{}) = ()
-# @inline eltypes(ranges) = (eltype(first(ranges)), eltypes(tail(ranges))...)
-#
-# @inline _axes(::Tuple{}) = ()
-# @inline _axes(ranges) = (axes(first(ranges), 1), _axes(tail(ranges))...)
-# @inline axes(g::Grid) = _axes(g.ranges)
-#
-# @inline _size(::Tuple{}) = ()
-# @inline _size(ranges) = (size(first(ranges), 1), _size(tail(ranges))...)
-# @inline size(g::Grid) = _size(g.ranges)
+# # dims(g::CubicGrid) = (length(g.xrange), length(g.yrange), length(g.zrange))
+# # length(g::CubicGrid) = *(dims(g)...)
 #
 #
-# _getindex(::Tuple{}, ::Any) = ()
-# @propagate_inbounds _getindex(ranges, I) = (first(ranges)[first(I)], _getindex(tail(ranges), tail(I))...)
-# @propagate_inbounds getindex(g::Grid, I::Vararg{Int,N}) where {N} = _getindex(g.ranges, I)
+# # cubic grid
+# # - step size (dx == dy == dz)
+# # - start(3) stop(3) step()
+# # - start(3) stop(3)
 #
-# grid(ranges::Vararg{Any,N}) where {N} = Grid{Tuple{eltypes(ranges)...},N,typeof(ranges)}(ranges)
+# # struct CubicGrid <: AbstractGrid
+# #     xi::StepRangeLen
+# #     yi::StepRangeLen
+# #     zi::StepRangeLen
+# # end
+# # origin(g::CubicGrid) = [g.xi[1], g.yi[1], g.zi[1]]
+# # dims(g::CubicGrid) = (length(g.xi), length(g.yi), length(g.zi))
 #
-# end # module
+# # struct CubicLattice <: AbstractGrid
+# #     origin::SVector{3,Float64}
+# #     dims::SVector{3,Int64}
+# #     spacing::Float64
+# # end
+# #
+# # struct RotatadCubicLattice <: AbstractGrid
+# #     start::SVector{3,Float64}
+# #     length::SVector{3,Int64}
+# #     step::Float64
+# #     orientation::SMatrix{3,3,Float64}
+# # end
+# #
+#
+# # # https://juliageometry.github.io/Meshes.jl/stable/meshes.html#Meshes.CartesianGrid
+# # # https://github.com/JuliaGeometry/Meshes.jl/blob/master/src/mesh/cartesiangrid.jl
+# # # https://juliaarrays.github.io/LazyGrids.jl/stable/examples/1-ndgrid/#D-case
+# #
+# #
+# # module StructuredGrids
+# #
+# # import Base: axes, getindex, size
+# #
+# # using Base: tail, @propagate_inbounds
+# #
+# # export grid
+# #
+# # struct Grid{T,N,RT} <: AbstractArray{T,N}
+# #     ranges::RT
+# # end
+# #
+# # @inline eltypes(::Tuple{}) = ()
+# # @inline eltypes(ranges) = (eltype(first(ranges)), eltypes(tail(ranges))...)
+# #
+# # @inline _axes(::Tuple{}) = ()
+# # @inline _axes(ranges) = (axes(first(ranges), 1), _axes(tail(ranges))...)
+# # @inline axes(g::Grid) = _axes(g.ranges)
+# #
+# # @inline _size(::Tuple{}) = ()
+# # @inline _size(ranges) = (size(first(ranges), 1), _size(tail(ranges))...)
+# # @inline size(g::Grid) = _size(g.ranges)
+# #
+# #
+# # _getindex(::Tuple{}, ::Any) = ()
+# # @propagate_inbounds _getindex(ranges, I) = (first(ranges)[first(I)], _getindex(tail(ranges), tail(I))...)
+# # @propagate_inbounds getindex(g::Grid, I::Vararg{Int,N}) where {N} = _getindex(g.ranges, I)
+# #
+# # grid(ranges::Vararg{Any,N}) where {N} = Grid{Tuple{eltypes(ranges)...},N,typeof(ranges)}(ranges)
+# #
+# # end # module

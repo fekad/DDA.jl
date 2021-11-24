@@ -13,7 +13,7 @@ The Clausius-Mossoti polarizability of dipoles:
 - `d`: Dipole lattice spacing
 - `eps`: complex permitivirty of dipole
 """
-function polarizability_CM(d, eps)
+function CM(d, eps)
     return 3d^3 / 4pi * (eps - 1) / (eps + 2)
 end
 # alpha_CM(eps, d) = 3d^3 / 4pi * (eps - 1) / (eps +2)
@@ -30,7 +30,7 @@ E0: complex incident field amplitude
 https://doi.org/10.1086/172396
 https://doi.org/10.1364/JOSAA.11.001491
 """
-function polarizability_LDR(eps, d, k, E₀)
+function LDR(eps, d, k, E₀)
     b1 = -1.8915316
     b2 =  0.1648469
     b3 = -1.7700004

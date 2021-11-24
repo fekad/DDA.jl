@@ -14,8 +14,8 @@ Visualisation:
 - Polarisation state can be represented as a point on the Bloch (Poincare) sphere.
 """
 
-abstract type Field end
 
+abstract type IncindentField <: AbstractField end
 
 
 @doc raw"""
@@ -63,7 +63,7 @@ Arbitrary direction:
 \mathbf{R} \begin{pmatrix} E_{0x} e^{i\phi_{x}} \\ E_{0y} e^{i\phi_{y}} \\ 0 \end{pmatrix} e^{i (\mathbf{R} \mathbf{k}) \cdot \mathbf{r} }e^{-i \omega t}.
 ```
 """
-struct PlaneWave <: Field
+struct PlaneWave <: IncindentField
     k::Float64
     e::SVector{2,ComplexF64}
     θ::Float64
@@ -72,18 +72,28 @@ end
 
 # E = PlaneWave(1, (1, 1im), 1, 1)
 
-function field(E₀, k , r)
-    return E₀ * exp(-im * dot(k, r))
-end
-
-function field(E:PlaneWave, r)
+function field(E::PlaneWave, r)
     R = RotZY(E.θ, E.ϕ)
     E₀ = R[:,1:2] * E.e
     kvec = R[:,3] * E.k
-    return field(E₀, kvec, r)
+    return E₀ * exp(-im * dot(kvec, r))
 end
 
-function field(E::PlaneWave, r::Vector{SVector{3, Float64}})
+function field(E::PlaneWave, r::AbstractVector)
+    out = Array{ComplexF64}(undef, (3, length(r)))
+    for i in eachindex(r)
+        out[:,i] = field(E, r[i])
+    end
+    return out
+end
+
+
+function field(E::PlaneWave, r::AbstractArray)
+
+    # @boundcheck if size(r, 1) != 3
+    #     throw("dimension error")
+    # end
+
     out = Array{ComplexF64}(undef, (3, length(r)))
     for i in eachindex(r)
         out[:,i] = field(E, r[i])

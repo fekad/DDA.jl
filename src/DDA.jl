@@ -1,42 +1,45 @@
 module DDA
 
-
 import Base: size, getindex, convert
 # import Base.CartesianIndecies
 
 # Strandrd libraries
-using StaticArrays
-using StaticArrays:SVector
-
 using LinearAlgebra
+using AbstractFFTs
 
-# Interpolation
-using Dierckx
-# using Interpolations
+using StaticArrays
+# using StaticArrays:SVector
 
-import Meshes
+abstract type AbstractGrid{Dim,T} end
+abstract type AbstractField end
+abstract type AbstractTarget end
 
-
-export E_inc, Permittivity, PermittivityTable, permittivity
-include("permittivity.jl")
-
-export polarizability_CM, polarizability_LDR
-include("polarizability.jl")
-
-using Rotations: RotZY
-export PlaneWave, field
-include("field.jl")
-
-include("interaction.jl")
 
 export CartesianGrid
 include("disrcetisation.jl")
 
-export Disk, Sphere, dipoles, discretize
-include("scatterer.jl")
+export Sphere, Disk
+include("targets.jl")
 
 
+# export E_inc, Permittivity, PermittivityTable, permittivity
 include("MaterialModels.jl")
+
+
+
+
+
+export CM, LDR
+include("polarizability.jl")
+
+using Rotations: RotZY
+export PlaneWave, field
+include("incidentfield.jl")
+
+include("interaction.jl")
+
+
+
 
 # Dipole coordinates
 # Polarizability
