@@ -1,4 +1,10 @@
 # DDA.jl
+
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://fekad.github.io/DDA.jl/)
+[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://fekad.github.io/DDA.jl/dev)
+[![Run tests](https://github.com/fekad/DDA.jl/actions/workflows/test.yml/badge.svg)](https://github.com/fekad/DDA.jl/actions/workflows/test.yml)
+
+
 Discrete Dipole Approximation
 
 
