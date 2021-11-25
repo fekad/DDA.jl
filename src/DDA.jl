@@ -22,12 +22,6 @@ export Sphere, Disk
 include("targets.jl")
 
 
-# export E_inc, Permittivity, PermittivityTable, permittivity
-include("MaterialModels.jl")
-
-
-
-
 
 export CM, LDR
 include("polarizability.jl")
