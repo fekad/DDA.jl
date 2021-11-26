@@ -12,6 +12,8 @@ makedocs(
     modules = [DDA],
     pages=[
         "Home" => "index.md",
+        
+        "Polarizability" => "polarizability.md"
     ]
 )
 
