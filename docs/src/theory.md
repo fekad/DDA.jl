@@ -30,7 +30,7 @@ with the field at the lattice site ``j`` due to a dipole on site ``m`` defined a
 \right\},
 ```
 
-where ``k`` is the wave number and ``{r}_{jm} = | \textbf{r}_j - \textbf{r}_{m} |``. Equation (\ref{eq:dip_j}) is valid for each dipoles ``\textbf{p}_j`` and leads to a system of ``3N`` complex coupled linear equations that can be solved numerically. The electromagnetic response properties can then be computed.
+where ``k`` is the wave number and ``{r}_{jm} = | \textbf{r}_j - \textbf{r}_{m} |``. Equation (...) is valid for each dipoles ``\textbf{p}_j`` and leads to a system of ``3N`` complex coupled linear equations that can be solved numerically. The electromagnetic response properties can then be computed.
 
 For the investigation of the optical response, an electromagnetic plane wave is considered as applied electric field:
 
@@ -93,13 +93,13 @@ as found by Echenique et al. for the dipolar loss of a dielectric sphere.
 
 ## Cathodoluminescence in the frame of the DDA
 
-For cathodoluminescence, light emission probability is given by (Eqs. (\ref{Ex}-\ref{lossener}) remain valid)
+For cathodoluminescence, light emission probability is given by (Eqs. (...) remain valid)
 
 ```math
 \Gamma_{CL}(\omega) = \frac{c \, r_s^2}{4 \pi^2 \hbar^2 \omega} \int \mathrm{d} \Omega | \mathbf{E}_{ind}(\mathbf{r}_s,\omega)|
 ```
 
-where the integral is performed on the far-field induced field, i.e., on a sphere with ``kr_s >> 1``. The induced field is obtained by adding the field from each dipole moments (``\mathbf{r}_{sj}= \mathbf{r}_s - \mathbf{r}_j`` and Eq. (\ref{ajm}))
+where the integral is performed on the far-field induced field, i.e., on a sphere with ``kr_s >> 1``. The induced field is obtained by adding the field from each dipole moments (``\mathbf{r}_{sj}= \mathbf{r}_s - \mathbf{r}_j`` and Eq. (...))
 
 ```math
 \mathbf{E}_{ind}(\mathbf{r}_s,\omega)=\sum_j \mathbf{A}_{sj} \mathbf{p}_j
@@ -108,7 +108,7 @@ where the integral is performed on the far-field induced field, i.e., on a spher
 
 ## Substrate effect
 
-The influence of a semi-infinite substrate is taken into account using the classical image model. In our EELS description, the expression of the probe charge electric field (Eqs. (\ref{Ex}-\ref{Ez})) requires an electron trajectory in vacuum.
+The influence of a semi-infinite substrate is taken into account using the classical image model. In our EELS description, the expression of the probe charge electric field (Eqs. (...) requires an electron trajectory in vacuum.
 
 First, let the substrate surface be the ``YOZ``-plan (``x=0``). The polarization field of the semi-infinite substrate due to a charged particle at ``(x_q(t),y_q(t),z_q(t))`` can be described by an image-charge ``{q}^{'}`` located in the substrate at ``(-x_q(t),y_q(t),z_q(t))``. The total applied field at the lattice site ``j`` becomes the sum of the field of the actual charge and its image:
 
@@ -124,7 +124,7 @@ where
 
 with ``\epsilon_{sub}`` the dielectric function of the substrate.
 
-Second, the substrate response to the dipole moments is also considered via the image method. Equation (\ref{eq:dip_j}) becomes
+Second, the substrate response to the dipole moments is also considered via the image method. Equation (...) becomes
 
 ```math
 \textbf{p}_j = \alpha_j \left[ \textbf{E}_j^{app} + \sum\limits_{m \neq j} \textbf{A}_{jm} \textbf{p}_{m} + \sum_{m} \textbf{A}_{jm}' \textbf{p}_{m}' \right] ,
@@ -145,6 +145,6 @@ and
 
 where the image dipole is located at ``\textbf{r}_j^{'} = \left(-x_j, y_j, z_j\right)`` for a dipole moment ``\textbf{p}_j`` at ``{\textbf{r}_j} = \left(x_j, y_j, z_j\right)``.
 
-Once the linear system is solved, both ``\textbf{p}_j`` (nanoparticle polarization) and ``\mathrm{p}_j^{'}`` (substrate polarization) are known, and both contributions must be included in the loss probability (Eq. (\ref{eq:loss})).
+Once the linear system is solved, both ``\textbf{p}_j`` (nanoparticle polarization) and ``\mathrm{p}_j^{'}`` (substrate polarization) are known, and both contributions must be included in the loss probability (Eq. (...)).
 
-We emphasize here that the present formulation (and, in particular, Eq. (\ref{chfield})) is only valid when the electron does not penetrate into the substrate.
+We emphasize here that the present formulation (and, in particular, Eq. (...) is only valid when the electron does not penetrate into the substrate.
