@@ -12,7 +12,7 @@ makedocs(
     modules = [DDA],
     pages=[
         "Home" => "index.md",
-        
+        "Background" => "theory.md",
         "Polarizability" => "polarizability.md"
     ]
 )

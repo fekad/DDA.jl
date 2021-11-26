@@ -22,8 +22,7 @@ export Sphere, Disk
 include("targets.jl")
 
 
-
-export CM, LDR
+export CM, CMRR, GOHG, ILDR, LDR
 include("polarizability.jl")
 
 using Rotations: RotZY
