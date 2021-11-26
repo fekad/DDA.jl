@@ -19,6 +19,8 @@ abstract type IncindentField <: AbstractField end
 
 
 @doc raw"""
+    PlaneWave(k, e, θ, ϕ)
+
 Suppose that a monochromatic plane wave of light is travelling in the positive ``z``-direction, with angular frequency ``\omega`` and wave vector ``\mathbf{k} = (0,0,k)``, where the wavenumber k = ω/c. Then the electric and magnetic fields E and H are orthogonal to k at each point; they both lie in the plane "transverse" to the direction of motion. Furthermore, H is determined from E by 90-degree rotation and a fixed multiplier depending on the wave impedance of the medium. So the polarization of the light can be determined by studying E. The complex amplitude of E is written
 
 ```math
@@ -72,20 +74,20 @@ end
 
 # E = PlaneWave(1, (1, 1im), 1, 1)
 
-function field(E::PlaneWave, r)
+function field(E::PlaneWave, r::AbstractVector)
     R = RotZY(E.θ, E.ϕ)
     E₀ = R[:,1:2] * E.e
     kvec = R[:,3] * E.k
-    return E₀ * exp(-im * dot(kvec, r))
+    return E₀ * exp(im * dot(kvec, r))
 end
 
-function field(E::PlaneWave, r::AbstractVector)
-    out = Array{ComplexF64}(undef, (3, length(r)))
-    for i in eachindex(r)
-        out[:,i] = field(E, r[i])
-    end
-    return out
-end
+# function field(E::PlaneWave, r::AbstractVector{AbstractVector})
+#     out = Array{ComplexF64}(undef, (3, length(r)))
+#     for i in eachindex(r)
+#         out[:,i] = field(E, r[i])
+#     end
+#     return out
+# end
 
 
 function field(E::PlaneWave, r::AbstractArray)

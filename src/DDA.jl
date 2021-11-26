@@ -31,6 +31,10 @@ include("incidentfield.jl")
 
 include("interaction.jl")
 
+include("farfield.jl")
+
+include("nearfield.jl")
+
 
 
 
