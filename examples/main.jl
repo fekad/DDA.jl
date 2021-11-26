@@ -1,8 +1,15 @@
 using Revise
 using DDA
+using RefractiveIndexDatabase
+using Permittivity
+using Unitful
 
+using PhysicalConstants.CODATA2018: ε_0, c_0
 
-
+# DDSCAT
+# The units must be the same as the wavelength units used in the file specifying the refractive index.
+# (x, y, z)_n = [(i, j, k)_n     + (x0, y0, z0)] × d, where d is the lattice constant (in physical units)
+# The dipole spacing d in physical units is determined from the specified value of aeff and the number N of dipoles in the target: d = (4π/3N)1/3aeff.
 ############################################################################
 # High-level interface for DDA calcularions
 ############################################################################
@@ -23,14 +30,33 @@ center = [0,0,0]
 radius = 1
 
 t = Sphere(center, radius)
-# t = Sphere(grid, center, radius) ???
+
+
+# 3. Define incindent field
+
+
+
+
 
 # 3. Define the material properties
-DDA.MaterialModels.test
-# ε = Material.gold("") ???
-ε = Material.load("Ag.yaml")
-α = LDR(ε)
+# TODO: wavelelngth or frequency???
+# TODO: refractive index or permittivity???
 
+Ag = get_material("main","Ag","Johnson")
+
+λ_Ag = Ag.λ
+ñ_Ag = Ag.n + Ag.k * im
+ε_Ag = ñ_Ag.^2;
+ω_Ag = ustrip.(2π * c_0 ./ (λ_Ag * 1u"μm") .|> u"THz")
+
+ε = PermittivityTable(ω_Ag, ε_Ag)
+
+
+
+# ε = Material.gold("") ???
+# ε = Material.load("Ag.yaml")
+#
+α = LDR(ε)
 s = Scatterer(t, α)
 
 
