@@ -25,7 +25,7 @@ Create a 2D grid with 100x100 locations and origin at [10.,20.] units:
 julia> CartesianGrid([10.,20.], [1.,1.], (100, 100))
 ```
 """
-struct CartesianGrid{T,N} <: AbstractGrid{T,N}
+struct CartesianGrid{T,N} <: AbstractGrid{SVector{N,T},N}
     origin::SVector{N,T}
     spacing::SVector{N,T}
     dims::Dims{N}
@@ -48,9 +48,7 @@ function CartesianGrid(origin::AbstractVector, spacing::AbstractVector, dims)
     CartesianGrid(promote(origin, spacing)..., Dims(dims))
 end
 
-
 # Constructors for the unit step grid
-
 function CartesianGrid{T}(dims::Vararg{Int,N}) where {T,N}
     CartesianGrid{T,N}(zero(SVector{N,T}), ones(SVector{N,T}), dims)
 end
@@ -64,27 +62,10 @@ end
 
 Base.size(g::CartesianGrid) = g.dims
 
-Base.eltype(::CartesianGrid{T,N}) where {T,N} = SVector{N,T}
-
-import Base: getindex
-
-function getindex(g::CartesianGrid{T,N}, I::Vararg{Int,N}) where {T,N}
-    # @boundscheck checkbounds(g, I...)
-    # error("CartesianGrid.getindex not implemented")
+@inline function Base.getindex(g::CartesianGrid{T,N}, I::Vararg{Int,N}) where {T,N}
+    @boundscheck checkbounds(g, I...)
     g.origin + (I .- 1) .* g.spacing
 end
-
-# # @inline Base.@propagate_inbounds
-# function getindex(g::CartesianGrid{T,N}, I::CartesianIndex{N}) where {T,N}
-#     g[I.I...]
-# end
-
-# function getindex(g::CartesianGrid{T,N}, I...) where {T,N}
-#     inds = to_indices(g, I)
-#     # @boundscheck checkbounds(g, inds...)
-#     # @inbounds (g[ind] for ind in CartesianIndices(inds))
-#     g[inds...]
-# end
 
 
 #  Extra functions

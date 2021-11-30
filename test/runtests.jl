@@ -1,7 +1,7 @@
 using SafeTestsets, Test
 
 @safetestset "discretisaition" begin
-    include("test_discretisaition.jl")
+    include("test_grid.jl")
 end
 
 @safetestset "Incindent field" begin

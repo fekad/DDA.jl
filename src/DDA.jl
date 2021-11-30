@@ -1,6 +1,5 @@
 module DDA
 
-import Base: size, getindex, convert
 # import Base.CartesianIndecies
 
 # Strandrd libraries
@@ -10,13 +9,14 @@ using AbstractFFTs
 using StaticArrays
 # using StaticArrays:SVector
 
-abstract type AbstractGrid{Dim,T} end
+abstract type AbstractGrid{T,N} <: AbstractArray{T,N} end
 abstract type AbstractField end
 abstract type AbstractTarget end
 
 
+# import Base
 export CartesianGrid
-include("disrcetisation.jl")
+include("grid.jl")
 
 export Sphere, Disk
 include("targets.jl")
