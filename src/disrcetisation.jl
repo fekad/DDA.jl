@@ -1,197 +1,142 @@
-# DDSCAT approach:
-# - lattice (basis) vector
-# - lattice spacings
-# - lattice offset
-# - integer indecies
-#
-# DDSCAT example
-#  >TARELL  ellipsoidal grain; AX,AY,AZ= 30.0000 30.0000 30.0000
-# 14328 = NAT
-# 1.000000  0.000000  0.000000 = A_1 vector
-# 0.000000  1.000000  0.000000 = A_2 vector
-# 1.000000  1.000000  1.000000 = lattice spacings (d_x,d_y,d_z)/d
-#  0.50000   0.50000   0.50000 = lattice offset x0(1-3) = (x_TF,y_TF,z_TF)/d for dipole 0 0 0
-#    JA  IX  IY  IZ ICOMP(x,y,z)
-#     1  -2  -4 -15 1 1 1
+"""
+    CartesianGrid(origin, spacing, dims)
 
-# using Meshes: CartesianGrid
-# This implemetation is based on the CartesianGrid in Meshes.jl
-# Diferences:
-# - the elements are the centroids of the original grid elelments
-# - iterataion over coordinates (using CartesianIndecies)
-# - simplified topology
+A Cartesian grid with dimensions `dims`, lower left corner at `origin`
+and cell spacing `spacing`. The three arguments must have the same length.
 
+    CartesianGrid(dims)
+    CartesianGrid(dim1, dim2, ...)
 
-struct CartesianGrid{Dim,T} <: AbstractGrid{Dim,T}
-    origin::SVector{Dim,T}
-    spacing::SVector{Dim,T}
-    dims::Dims{Dim}
+Alternatively, a Cartesian grid can be constructed by only passing the dimensions
+`dims` as a tuple, or by passing each dimension `dim1`, `dim2`, ... separately.
+In this case, the origin and spacing default to (0,0,...) and (1,1,...).
 
-    function CartesianGrid{Dim,T}(origin, spacing, dims) where {Dim,T}
+## Examples
+
+Create a 3D grid with 100x100x50 locations:
+
+```julia
+julia> CartesianGrid(100, 100, 50)
+```
+
+Create a 2D grid with 100x100 locations and origin at [10.,20.] units:
+
+```julia
+julia> CartesianGrid([10.,20.], [1.,1.], (100, 100))
+```
+"""
+struct CartesianGrid{T,N} <: AbstractGrid{T,N}
+    origin::SVector{N,T}
+    spacing::SVector{N,T}
+    dims::Dims{N}
+
+    function CartesianGrid{T,N}(origin, spacing, dims) where {T,N}
         @assert all(dims .> 0) "dimensions must be positive"
         @assert all(spacing .> 0) "spacing must be positive"
         new(origin, spacing, dims)
     end
 end
 
+
 # Constructors
 
-CartesianGrid(origin::SVector{Dim,T}, spacing::SVector{Dim,T}, dims::Dims{Dim}) where {Dim,T} =
-    CartesianGrid{Dim,T}(origin, spacing, dims)
-
-CartesianGrid(origin::NTuple{Dim,T}, spacing::NTuple{Dim,T}, dims::Dims{Dim}) where {Dim,T} =
-    CartesianGrid{Dim,T}(SVector(origin), SVector(spacing), dims)
-
-CartesianGrid(origin::AbstractVector{T}, spacing::AbstractVector{T}, dims::Dims{Dim}) where {Dim,T} =
-    CartesianGrid(SVector(origin...), SVector(spacing...), Dims(dims))
-
-CartesianGrid(origin::AbstractVector, spacing::AbstractVector, dims::Dims{Dim}) where {Dim} =
-    CartesianGrid(promote(origin, spacing)..., Dims(dims))
-
-# Constructors for unit step grid
-
-CartesianGrid{T}(dims::Dims{Dim}) where {Dim,T} =
-CartesianGrid{Dim,T}(zero(SVector{Dim,T}), ones(SVector{Dim,T}), dims)
-CartesianGrid{T}(dims::Vararg{Int,Dim}) where {Dim,T} = CartesianGrid{T}(dims)
-
-CartesianGrid(dims::Dims{Dim}) where {Dim} = CartesianGrid{Int}(dims)
-CartesianGrid(dims::Vararg{Int,Dim}) where {Dim} = CartesianGrid{Int}(dims)
-
-
-# Indexing functions
-
-Base.CartesianIndices(g::CartesianGrid{Dim}) where {Dim} = CartesianIndices(g.dims)
-function Base.getindex(g::CartesianGrid{Dim}, I::CartesianIndex{Dim}) where {Dim}
-    coord  = g.origin + (I.I .- 1) .* g.spacing
-    return coord
+function CartesianGrid(origin::AbstractVector{T}, spacing::AbstractVector{T}, dims::Dims{N}) where {T,N}
+    CartesianGrid{T,N}(SVector(origin...), SVector(spacing...), dims)
 end
 
-size(g::CartesianGrid) = g.dims
+function CartesianGrid(origin::AbstractVector, spacing::AbstractVector, dims)
+    CartesianGrid(promote(origin, spacing)..., Dims(dims))
+end
 
-# import Meshes
+
+# Constructors for the unit step grid
+
+function CartesianGrid{T}(dims::Vararg{Int,N}) where {T,N}
+    CartesianGrid{T,N}(zero(SVector{N,T}), ones(SVector{N,T}), dims)
+end
+
+function CartesianGrid(dims::Vararg{Int,N}) where {N}
+    CartesianGrid{Int}(dims...)
+end
+
+
+# AbstractArray interface
+
+Base.size(g::CartesianGrid) = g.dims
+
+Base.eltype(::CartesianGrid{T,N}) where {T,N} = SVector{N,T}
+
+import Base: getindex
+
+function getindex(g::CartesianGrid{T,N}, I::Vararg{Int,N}) where {T,N}
+    # @boundscheck checkbounds(g, I...)
+    # error("CartesianGrid.getindex not implemented")
+    g.origin + (I .- 1) .* g.spacing
+end
+
+# # @inline Base.@propagate_inbounds
+# function getindex(g::CartesianGrid{T,N}, I::CartesianIndex{N}) where {T,N}
+#     g[I.I...]
+# end
+
+# function getindex(g::CartesianGrid{T,N}, I...) where {T,N}
+#     inds = to_indices(g, I)
+#     # @boundscheck checkbounds(g, inds...)
+#     # @inbounds (g[ind] for ind in CartesianIndices(inds))
+#     g[inds...]
+# end
+
+
+#  Extra functions
+
+Base.minimum(g::CartesianGrid) = g.origin
+Base.maximum(g::CartesianGrid) = g.origin + width(g)
+Base.extrema(g::CartesianGrid) = (minimum(g), maximum(g))
+
+spacing(g::CartesianGrid) = g.spacing
+width(g::CartesianGrid) = (g.dims .- 1) .* g.spacing
+center(g::CartesianGrid) = g.origin + width(g) ./ 2
+
+function Base.show(io::IO, g::CartesianGrid{T,N}) where {T,N}
+    dims = join(g.dims, "×")
+    print(io, "$dims CartesianGrid{$T,$N}")
+end
+
+function Base.show(io::IO, ::MIME"text/plain", g::CartesianGrid)
+    println(io, g)
+    println(io, "  minimum: ", minimum(g))
+    println(io, "  maximum: ", maximum(g))
+    print(io, "  spacing: ", Tuple(spacing(g)))
+end
+
+# CartesianGrid(origin::SVector{T,N}, spacing::SVector{T,N}, dims::Dims{N}) where {T,N} =
+#     CartesianGrid{T,N}(origin, spacing, dims)
+
+# CartesianGrid(origin::NTuple{T,N}, spacing::NTuple{T,N}, dims::Dims{N}) where {T,N} =
+#     CartesianGrid{T,N}(SVector(origin), SVector(spacing), dims)
+
 #
-# # Simplified version of CartesianGrid
-# struct CubicGrid
-#     origin::Vector{Float64}
-#     spacing::Vector{Float64}
-#     dims::Dims{3}
-#
-#     function CubicGrid(origin, spacing, dims)
-#         @assert all(dims .> 0) "dimensions must be positive"
-#         @assert all(spacing .> 0) "spacing must be positive"
-#         # @show origin, spacing, dims
-#         new(origin, spacing, dims)
-#     end
+# function CartesianGrid{T}(dims::Dims{N}) where {T,N}
+#     @show "CartesianGrid{T}(dims::Dims{N}) where {T,N}"
+#     CartesianGrid{T,N}(zero(SVector{N,T}), ones(SVector{N,T}), dims)
 # end
 #
-# CubicGrid(dims::Vararg{Int,3}) = CubicGrid(zeros(3), ones(3), Dims(dims))
-#
-# Meshes.CartesianGrid(g::CubicGrid) = Meshes.CartesianGrid{3,Float64}(g.dims, g.origin .- g.spacing / 2, g.spacing)
-# convert(::Type{Meshes.CartesianGrid}, g::CubicGrid) = Meshes.CartesianGrid(g)
-#
-#
-# @inline Base.@propagate_inbounds function Base.getindex(
-#     g::CubicGrid,
-#     i::Vararg{Int,3},
-# )
-#     #  @boundscheck checkbounds(g, i...)
-#     return @. g.origin + (i - 1) * g.spacing
+# function CartesianGrid{T}(dims::Vararg{Int,N}) where {T,N}
+#     @show "CartesianGrid{T}(dims::Vararg{Int,N}) where {T,N}"
+#     CartesianGrid{T}(dims)
 # end
 #
-# # Alternative implementations:
+# function CartesianGrid(dims::Dims{N}) where {N}
+#     @show "CartesianGrid(dims::Dims{N}) where {N}"
+#     CartesianGrid{Int}(dims)
+# end
 #
-# # # more abstract
-# # struct LinRange{T,L<:Integer} <: AbstractRange{T}
-# #     start::T
-# #     stop::T
-# #     len::L
-# # end
+# function CartesianGrid(dims::Vararg{Int,N}) where {N}
+#     @show "CartesianGrid(dims::Vararg{Int,N}) where {N}"
+#     CartesianGrid{Int}(dims)
+# end
 #
-# # # using Base: Float64, disable_library_threading_hooks
-# # using LazyGrids:ndgrid
-# #
-# # abstract type AbstractGrid end
-# #
-# # import Base:length
-# #
-# # struct CubicGrid <: AbstractGrid
-# #     xrange::AbstractRange
-# #     yrange::AbstractRange
-# #     zrange::AbstractRange
-# #     function CubicGrid(xrange, yrange, zrange)
-# #         @assert isapprox(step(xrange), step(yrange))
-# #         @assert isapprox(step(xrange), step(zrange))
-# #         return new(xrange, yrange, zrange)
-# #     end
-# # end
-#
-# # CubicGrid(xmin, xmax, ymin, ymax, zmin, zmax, dx) = CubicGrid(range(xmin, xmax, step=dx), range(ymin, ymax, step=dx), range(zmin, zmax, step=dx))
-# # CubicGrid(xmin, xmax, ymin, ymax, zmin, zmax, d) = ndgrid(xmin:d:xmax, ymin:d:ymax, zmin:d:zmax)
-#
-# # dims(g::CubicGrid) = (length(g.xrange), length(g.yrange), length(g.zrange))
-# # length(g::CubicGrid) = *(dims(g)...)
-#
-#
-# # cubic grid
-# # - step size (dx == dy == dz)
-# # - start(3) stop(3) step()
-# # - start(3) stop(3)
-#
-# # struct CubicGrid <: AbstractGrid
-# #     xi::StepRangeLen
-# #     yi::StepRangeLen
-# #     zi::StepRangeLen
-# # end
-# # origin(g::CubicGrid) = [g.xi[1], g.yi[1], g.zi[1]]
-# # dims(g::CubicGrid) = (length(g.xi), length(g.yi), length(g.zi))
-#
-# # struct CubicLattice <: AbstractGrid
-# #     origin::SVector{3,Float64}
-# #     dims::SVector{3,Int64}
-# #     spacing::Float64
-# # end
-# #
-# # struct RotatadCubicLattice <: AbstractGrid
-# #     start::SVector{3,Float64}
-# #     length::SVector{3,Int64}
-# #     step::Float64
-# #     orientation::SMatrix{3,3,Float64}
-# # end
-# #
-#
-# # # https://juliageometry.github.io/Meshes.jl/stable/meshes.html#Meshes.CartesianGrid
-# # # https://github.com/JuliaGeometry/Meshes.jl/blob/master/src/mesh/cartesiangrid.jl
-# # # https://juliaarrays.github.io/LazyGrids.jl/stable/examples/1-ndgrid/#D-case
-# #
-# #
-# # module StructuredGrids
-# #
-# # import Base: axes, getindex, size
-# #
-# # using Base: tail, @propagate_inbounds
-# #
-# # export grid
-# #
-# # struct Grid{T,N,RT} <: AbstractArray{T,N}
-# #     ranges::RT
-# # end
-# #
-# # @inline eltypes(::Tuple{}) = ()
-# # @inline eltypes(ranges) = (eltype(first(ranges)), eltypes(tail(ranges))...)
-# #
-# # @inline _axes(::Tuple{}) = ()
-# # @inline _axes(ranges) = (axes(first(ranges), 1), _axes(tail(ranges))...)
-# # @inline axes(g::Grid) = _axes(g.ranges)
-# #
-# # @inline _size(::Tuple{}) = ()
-# # @inline _size(ranges) = (size(first(ranges), 1), _size(tail(ranges))...)
-# # @inline size(g::Grid) = _size(g.ranges)
-# #
-# #
-# # _getindex(::Tuple{}, ::Any) = ()
-# # @propagate_inbounds _getindex(ranges, I) = (first(ranges)[first(I)], _getindex(tail(ranges), tail(I))...)
-# # @propagate_inbounds getindex(g::Grid, I::Vararg{Int,N}) where {N} = _getindex(g.ranges, I)
-# #
-# # grid(ranges::Vararg{Any,N}) where {N} = Grid{Tuple{eltypes(ranges)...},N,typeof(ranges)}(ranges)
-# #
-# # end # module
+# function getindex(g::CartesianGrid{T,N}, I::CartesianIndex{N}) where {T,N}
+#     coord = g.origin + (I.I .- 1) .* g.spacing
+#     return coord
+# end
