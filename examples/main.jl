@@ -10,6 +10,105 @@ using PhysicalConstants.CODATA2018: ε_0, c_0
 # The units must be the same as the wavelength units used in the file specifying the refractive index.
 # (x, y, z)_n = [(i, j, k)_n     + (x0, y0, z0)] × d, where d is the lattice constant (in physical units)
 # The dipole spacing d in physical units is determined from the specified value of aeff and the number N of dipoles in the target: d = (4π/3N)1/3aeff.
+
+
+
+
+############################################################################
+# "Medium"" level interface to DDA calulations
+############################################################################
+
+# everything stored as a list and there is a mapping between idicies
+# r (3, Nd)
+# E (3, Nd)
+# α (3, Nd)
+# inds (3, Nd)
+# A (Nx, Ny, Nz, 6) ??? lazy?
+
+# using Rotations: RotZY
+#
+# R = RotZY(θ, ϕ)
+# E₀ = R[:,1:2] * e
+# kvec = R[:,3] * k
+
+# parameters
+λ = 1.      # wavelength
+k = 2π / λ  # wavenumber
+a = 1       # effective radii
+e = [1, 0]  # Jones polarisation vector
+θ, ϕ = 0, 0 # rotation angles [rad]
+
+
+
+
+# steps:
+# 1. create the coordinates of the dipoles,
+
+Nx, Ny, Nz = 10, 10, 10
+origin = [0, 0, 0]
+spacing =  [1., 1, 1]
+
+# g = CartesianGrid(origin, spacing, [Nx, Ny, Nz])
+# g = CartesianGrid(origin, spacing, Nx, Ny, Nz)
+g = CartesianGrid(origin, spacing, (Nx, Ny, Nz))
+
+center = [0,0,0]
+radius = 1
+
+t = Sphere(center, radius)
+r, inds = DDA.dipoles(g, t)
+
+# a = effective radii ???
+
+# 2. assign the polarizability αj to each dipole
+
+ε = permitivity(Material.load("Ag.yaml"), k)
+d = a * spacing # ???
+E₀ = norm(e)
+α = LDR(ε, d, k, E₀)
+
+
+# 3. calculated the incident field E_inc, at each dipole,
+
+E_inc = field(PlaneWave(k, e, θ, ϕ), r)
+
+
+# 4. assemble the interaction matrix A and
+
+A = interactions(k, r, α)
+
+# 5. solve for P in the system of linear equations
+
+P = A \ E
+P = bicgstabl(A, E; abstol=1e-8)
+P = cg(A, E; abstol=1e-8, maxiter=1000, verbose=true)
+P = minres(A, E; abstol=1e-8, maxiter=1000)
+
+
+# The solution using FFT
+A = InteractionTensor(g, k, α, inds)
+P = bicgstabl(factorise(A), E; abstol=1e-8)
+
+
+# Analyse the results
+
+@show C_abs(k, P, α)
+@show C_ext(k, E0, Ei, P)
+@show C_sca(k, E0, Ei, P, α)
+
+# calculate the field at a point
+r = [1, 1, 1]
+E = E_sca_FF(k, r, P, r_E)
+
+
+
+
+
+
+
+
+
+
 ############################################################################
 # High-level interface for DDA calcularions
 ############################################################################
@@ -141,84 +240,12 @@ prob = DDAProblem(dipoles, polarisabilities, E_inc)
 # grid: d, E_inc: k, E₀
 
 
-############################################################################
-# "Medium"" level interface to DDA calulations
-############################################################################
-
-# everything stored as a list and there is a mapping between idicies
-# r (Nd, 3)
-# E (Nd, 3)
-# α (Nd, 3)
-# inds (Nd, 3)
-# A (Nx, Ny, Nz, 6) ??? lazy?
 
 
-# parameters
-k = 2π      # wavenumber
-a = 1       # effective radii
-e = [1, 0]  # Jones polarisation vector
-θ, ϕ = 0, 0 # rotation angles [rad]
 
 
-# steps:
-# 1. create the coordinates of the dipoles,
-
-Nx, Ny, Nz = 10, 10, 10
-origin = [0, 0, 0]
-spacing =  [1, 1, 1]
-
-g = Grid(origin, spacing, [Nx, Ny, Nz])
-
-center = [0,0,0]
-radius = 1
-
-t = Sphere(center, radius)
-r, inds = dipoles(g, s)
-
-# a = effective radii ???
-
-# 2. assign the polarizability αj to each dipole
-
-ε = permitivity(Material.load("Ag.yaml"), k)
-d = a * spacing # ???
-E₀ = norm(e)
-α = LDR(ε, d, k, E₀)
 
 
-# 3. calculated the incident field E_inc, at each dipole,
-
-E_inc = field(PlaneWave(k, e, θ, ϕ), r)
-
-
-# 4. assemble the interaction matrix A and
-
-A = interactions(k, r, α)
-
-# 5. solve for P in the system of linear equations
-
-P = A \ E
-P = bicgstabl(A, E; abstol=1e-8)
-P = cg(A, E; abstol=1e-8, maxiter=1000, verbose=true)
-P = minres(A, E; abstol=1e-8, maxiter=1000)
-
-
-# The solution using FFT
-A = InteractionTensor(g, k, α, inds)
-P = bicgstabl(factorise(A), E; abstol=1e-8)
-
-
-# Analyse the results
-
-@show C_abs(k, P, α)
-@show C_ext(k, E0, Ei, P)
-@show C_sca(k, E0, Ei, P, α)
-
-# calculate the field at a point
-r = [1, 1, 1]
-E = E_sca_FF(k, r, P, r_E)
-
-
-end
 
 # using Plots
 #
