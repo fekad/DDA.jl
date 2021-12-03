@@ -2,49 +2,43 @@
 # - defintion of material of the scatterers
 
 struct Sphere <: AbstractTarget
-    center::SVector{3,Float64}
+    center::Point3{Float64}
     radius::Float64
 end
 
-
-function isinside(x::Real, y::Real, z::Real, s::Sphere)
-    r = s.radius
-    x0, y0, z0 = s.center
-    if abs2(x - x0) + abs2(y - y0) + abs2(z - z0) <= abs2(r)
-        return true
-    end
-    return false
+function Base.in(p::Point, s::Sphere)
+    return norm(s.center - p) ≤ s.radius
 end
 
 
 struct Disk <: AbstractTarget
-    center::SVector{3,Float64}
+    center::Point3{Float64}
     radius::Float64
     height::Float64
 end
 
 
-function isinside(x::Real, y::Real, z::Real, s::Disk)
+function Base.in(p::Point, s::Disk)
+    x, y, z = p
     r, h = s.radius, s.height
     x0, y0, z0 = s.center
-    if abs2(x - x0) + abs2(y - y0) <= abs2(r) &&
-        z >= z0 && z <= z0 + h
-        return true
-    end
-    return false
+    return  abs2(x - x0) + abs2(y - y0) <= abs2(r) && z >= z0 && z <= z0 + h
 end
 
 
-function dipoles(g::CartesianGrid, s::AbstractTarget)
-    inds = CartesianIndices(g)
-    out = SVector{3,Float64}[]
-    for ind in inds
+function dipoles(g::CartesianGrid{T,N}, s::AbstractTarget) where {T,N}
+
+    coords = Point{N,T}[]
+    inds = CartesianIndex{N}[]
+
+    for ind in CartesianIndices(g)
         coord = g[ind]
-        if isinside(coord..., s)
-            push!(out, coord)
+        if coord ∈ s
+            push!(coords, coord)
+            push!(inds, ind)
         end
     end
-    return out
+    return coords,inds
 end
 
 
@@ -100,6 +94,47 @@ end
 
 
 
+# function isinside(p::Point, s::Sphere)
+#     # x0, y0, z0 = s.center
+#     # x, y, z = p
+#     # return abs2(x - x0) + abs2(y - y0) + abs2(z - z0) <= abs2(s.radius)
+#     # return sum(@. abs2(s.center - p)) ≤ abs2(s.radius)
+#     return norm(s.center - p) ≤ s.radius
+# end
+
+# function isinside(x::Real, y::Real, z::Real, s::Sphere)
+#     r = s.radius
+#     x0, y0, z0 = s.center
+#     return abs2(x - x0) + abs2(y - y0) + abs2(z - z0) <= abs2(r)
+# end
+
+
+
+# function dipoles(g::CartesianGrid{T,N}, s::AbstractTarget) where {T,N}
+#     coords = Point{N,T}[]
+#     for ind in CartesianIndices(g)
+#         coord = g[ind]
+#         if isinside(coord..., s)
+#             push!(coords, coord)
+#         end
+#     end
+#     return coords
+# end
+
+# function dipoles2(g::CartesianGrid{T,N}, s::AbstractTarget) where {T,N}
+#
+#     coords = Point{N,T}[]
+#     inds = CartesianIndex{N}[]
+#
+#     for ind in CartesianIndices(g)
+#         coord = g[ind]
+#         if isinside(coord..., s)
+#             push!(coords, coord)
+#             push!(inds, ind)
+#         end
+#     end
+#     return coords,inds
+# end
 
 
 

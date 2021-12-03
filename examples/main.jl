@@ -1,10 +1,11 @@
-using Revise
+# using Revise
 using DDA
 using RefractiveIndexDatabase
 using Permittivity
 using Unitful
-
+using BenchmarkTools
 using PhysicalConstants.CODATA2018: ε_0, c_0
+
 
 # DDSCAT
 # The units must be the same as the wavelength units used in the file specifying the refractive index.
@@ -43,24 +44,33 @@ e = [1, 0]  # Jones polarisation vector
 
 # steps:
 # 1. create the coordinates of the dipoles,
+# CartesianGrid{Float64,3}(SVector(0.,0.,0.),SVector(1.,1.,1.),Dims((11,11,11)))
+# CartesianGrid{Float64,3}((0.,0.,0.),(1.,1.,1.),(11,11,11))
 
 Nx, Ny, Nz = 10, 10, 10
-origin = [0, 0, 0]
+origin = [0.5, 0.5, 0.5]
 spacing =  [1., 1, 1]
 
-# g = CartesianGrid(origin, spacing, [Nx, Ny, Nz])
-# g = CartesianGrid(origin, spacing, Nx, Ny, Nz)
+Nx, Ny, Nz = 101, 101, 101
+origin = Point3(0., 0., 0.)
+spacing = [1., 1, 1]
+
 g = CartesianGrid(origin, spacing, (Nx, Ny, Nz))
 
-center = [0,0,0]
-radius = 1
+center = DDA.center(g)
+# radius = (Nx - 1) * spacing[1] / 2
+radius = minimum(DDA.width(g)) / 2
 
-t = Sphere(center, radius)
-r, inds = DDA.dipoles(g, t)
+t = DDA.Sphere(center, radius)
+r2, inds = DDA.dipoles(g, t)
+
+# @btime DDA.dipoles($g, $t)
 
 # a = effective radii ???
 
 # 2. assign the polarizability αj to each dipole
+
+
 
 ε = permitivity(Material.load("Ag.yaml"), k)
 d = a * spacing # ???

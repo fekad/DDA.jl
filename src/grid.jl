@@ -26,7 +26,7 @@ julia> CartesianGrid([10.,20.], [1.,1.], (100, 100))
 ```
 """
 struct CartesianGrid{T,N} <: AbstractGrid{SVector{N,T},N}
-    origin::SVector{N,T}
+    origin::Point{N,T}
     spacing::SVector{N,T}
     dims::Dims{N}
 
@@ -59,12 +59,12 @@ end
 
 
 # AbstractArray interface
-
+# Base.ndims(::CartesianGrid{Dim}) where {Dim} = Dim
 Base.size(g::CartesianGrid) = g.dims
 
 @inline function Base.getindex(g::CartesianGrid{T,N}, I::Vararg{Int,N}) where {T,N}
     @boundscheck checkbounds(g, I...)
-    g.origin + (I .- 1) .* g.spacing
+    return @. g.origin + (I - 1) * g.spacing
 end
 
 
@@ -87,7 +87,7 @@ function Base.show(io::IO, ::MIME"text/plain", g::CartesianGrid)
     println(io, g)
     println(io, "  minimum: ", minimum(g))
     println(io, "  maximum: ", maximum(g))
-    print(io, "  spacing: ", Tuple(spacing(g)))
+    print(io, "  spacing: ", spacing(g))
 end
 
 # CartesianGrid(origin::SVector{T,N}, spacing::SVector{T,N}, dims::Dims{N}) where {T,N} =

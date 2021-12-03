@@ -9,9 +9,18 @@ using AbstractFFTs
 using StaticArrays
 # using StaticArrays:SVector
 
+using GeometryBasics: Point, Point3
+export Point, Point3
+
 abstract type AbstractGrid{T,N} <: AbstractArray{T,N} end
+
 abstract type AbstractField end
+
+abstract type AbstractPoint{Dim,T} <: StaticVector{Dim,T} end
+
 abstract type AbstractTarget end
+# abstract type AbstractTarget{Dim,T<:Number} end
+# Base.ndims(::AbstractTarget{Dim}) where {Dim} = Dim
 
 
 # import Base
