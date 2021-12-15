@@ -2,6 +2,12 @@ module DDA
 
 # import Base.CartesianIndecies
 
+using FFTW
+using AbstractFFTs
+using IterativeSolvers
+
+import Base: *
+
 # Strandrd libraries
 using LinearAlgebra
 using AbstractFFTs
@@ -44,7 +50,8 @@ include("farfield.jl")
 
 include("nearfield.jl")
 
-
+export TensorConvolution
+include("convolution.jl")
 
 
 # Dipole coordinates
