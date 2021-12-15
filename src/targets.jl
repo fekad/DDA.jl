@@ -45,17 +45,16 @@ end
 
 function discretize(g::CartesianGrid, s::AbstractTarget)
 
-    eps = 1
-    out = zeros(typeof(eps), size(g))
+    occupation = zeros(Bool, size(g))
 
-    inds = CartesianIndices(g)
-    for ind in inds
-        coord = g[ind]
-        if isinside(coord..., s)
-            out[ind] = eps
+    for i in eachindex(g)
+        coordinate = g[i]
+        
+        if coordinate ∈ s
+            occupation[i] = true
         end
     end
-    return out
+    return occupation
 end
 
 
