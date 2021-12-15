@@ -1,3 +1,12 @@
+# 
+# !       CALPHA = polarizability prescription
+# !              = 'LATTDR' for LDR of Draine & Goodman (1993)
+# !              = 'GKDLDR' for LDR of Gutkowicz-Krusin & Draine (2004)
+# !              = 'FLTRCD' for filtered coupled dipole approach
+# !                             of Gay-Balmaz & Martin (2002) and
+# !                             Yurkin, Min & Hoekstra (2010)
+# !              [= 'SCLDR' not supported in present version]
+
 @doc raw"""
     CM(eps, d)
 

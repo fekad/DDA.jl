@@ -29,11 +29,12 @@ function calc_Ajk(k, rj, rk)
     return calc_Ajk(k, r_jk)
 end
 
+# TODO: allpha is a 3x3 (symmetric) tensor by defualt )
 calc_Ajj(alph) = Diagonal(1 / alph * I, 3)
 
 
 
-function interaction(k, r, alph)
+function interactions(k, r, alph)
     N = length(r)
     out = zeros(ComplexF64, 3, N, 3, N)
 

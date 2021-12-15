@@ -74,12 +74,42 @@ end
 
 # E = PlaneWave(1, (1, 1im), 1, 1)
 
-function field(E::PlaneWave, r::AbstractVector)
+function params(E::PlaneWave)
     R = RotZY(E.θ, E.ϕ)
     E₀ = R[:,1:2] * E.e
     kvec = R[:,3] * E.k
+    return kvec, E₀
+end
+
+
+function field(E::PlaneWave, r::AbstractVector)
     return E₀ * exp(im * dot(kvec, r))
 end
+
+
+struct PlaneWave2 <: IncindentField
+    kvec::SVector{3,Float64}
+    E₀::SVector{3,ComplexF64}
+end
+
+# syntax sugar
+function PlaneWave2(k ,e, θ, ϕ)
+    R = RotZY(θ, ϕ)
+    E₀ = R[:,1:2] * e
+    kvec = R[:,3] * k
+    return PlaneWave2(kvec, E₀)
+end
+
+function field(f::PlaneWave2, r::AbstractVector{Point3{T}}) where T
+    E = similar(r, SVector{3, ComplexF64})
+    for i in 1:length(r)
+        E[i] = field(f, r[i])
+    end
+    E
+end
+
+
+field(f::PlaneWave2, r::Point3) = f.E₀ * exp(im * dot(f.kvec, r))
 
 # function field(E::PlaneWave, r::AbstractVector{AbstractVector})
 #     out = Array{ComplexF64}(undef, (3, length(r)))

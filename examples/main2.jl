@@ -46,165 +46,141 @@ plotlyjs()
 # K*AEFF=      5.000033 = 2*pi*aeff/lambda
 
 
+# k = 2π / λ /10 # wavenumber
+k=1.
+# function runtest(k)
 
+    # parameters
+    λ = .5      # wavelength (microns)
+    k = 2π / λ  # wavenumber
+    a = 0.39789 # effective radii (microns)
+    d = 1.      # spacing
+    Nd = 32
+    Nd = 24
+    e = [1, 0]  # Jones polarisation vector
+    θ, ϕ = 0, 0 # rotation angles [rad]
 
+    # steps:
+    # 1. create the coordinates of the dipoles,
+    # CartesianGrid{Float64,3}(SVector(0.,0.,0.),SVector(1.,1.,1.),Dims((11,11,11)))
+    # CartesianGrid{Float64,3}((0.,0.,0.),(1.,1.,1.),(11,11,11))
 
-# parameters
-λ = .5      # wavelength (microns)
-k = 2π / λ  # wavenumber
-a = 0.39789 # effective radii (microns)
-d = 1.      # spacing
-Nd = 12
-e = [1, 0]  # Jones polarisation vector
-θ, ϕ = 0, 0 # rotation angles [rad]
+    Nx = Ny = Nz = Nd
+    origin = Point3(0., 0., 0.)
 
-# steps:
-# 1. create the coordinates of the dipoles,
-# CartesianGrid{Float64,3}(SVector(0.,0.,0.),SVector(1.,1.,1.),Dims((11,11,11)))
-# CartesianGrid{Float64,3}((0.,0.,0.),(1.,1.,1.),(11,11,11))
+    g = CartesianGrid(origin, [d, d, d], (Nx, Ny, Nz))
 
-Nx = Ny = Nz = Nd
-origin = Point3(0., 0., 0.)
+    center = DDA.center(g)
+    radius = (Nd+.49)/2
 
-g = CartesianGrid(origin, [d, d, d], (Nx, Ny, Nz))
+    t = DDA.Sphere(center, radius)
 
-center = DDA.center(g)
-# radius = 48.49/2
-radius = 12.49/2
+    r2, occ = DDA.dipoles(g, t)
+    occ = DDA.discretize(g, t)
+    # r2 == g[occ]
 
-t = DDA.Sphere(center, radius)
+    N = length(r2)
 
-r2, occ = DDA.dipoles(g, t)
-occ = DDA.discretize(g, t)
-# r2 == g[occ]
+    # a = effective radii ???
+    a_eff = (3*N*(a*d)^3/(4*pi))^(1/3)
 
-N = length(r2)
 
-# a = effective radii ???
-a_eff = (3*N*(a*d)^3/(4*pi))^(1/3)
 
+    a * d / a_eff       # d/aeff for this target [d=dipole spacing]
+    a * d / a_eff * a   # d (physical units) ???
 
+    # ----- physical extent of target volume in Target Frame ------
+    #      -0.393802      0.393802 = xmin,xmax (physical units)
+    #      -0.393802      0.393802 = ymin,ymax (physical units)
+    #      -0.393802      0.393802 = zmin,zmax (physical units)
+    Nd/2 * (a * d / a_eff * a)
 
+    a               # effective radius (physical units)
+    λ               # wavelength (in vacuo, physical units)
+    k*a             # 2*pi*aeff/lambda
 
 
-a * d / a_eff       # d/aeff for this target [d=dipole spacing]
-a * d / a_eff * a   # d (physical units) ???
+    # ( 0.20619  0.00000  0.00000 ) = k vector (latt. units) in TF
+    k* (a * d / a_eff * a)
 
-# ----- physical extent of target volume in Target Frame ------
-#      -0.393802      0.393802 = xmin,xmax (physical units)
-#      -0.393802      0.393802 = ymin,ymax (physical units)
-#      -0.393802      0.393802 = zmin,zmax (physical units)
-48/2 * (a * d / a_eff * a)
 
-a               # effective radius (physical units)
-λ               # wavelength (in vacuo, physical units)
-k*a             # 2*pi*aeff/lambda
 
 
-# ( 0.20619  0.00000  0.00000 ) = k vector (latt. units) in TF
-k * (a * d / a_eff * a)
 
+    # 2. assign the polarizability αj to each dipole
 
+    # m = 0.96 + 1.01im
+    m = 1.33 + 0.01im
 
+    ε = m^2
 
+    # |m|kd
+    abs(m) * k * (a * d / a_eff * a)
 
-# 2. assign the polarizability αj to each dipole
 
-m = 0.96 + 1.01im
+    # ε = permitivity(Material.load("Ag.yaml"), k)
 
-ε = m^2
+    # d = a * spacing # ???
+    kvec = [0, 0, k]
+    E₀ = [e..., 0]
+    α = LDR(ε, d, kvec, E₀)
 
-# |m|kd
-abs(m) * k * (a * d / a_eff * a)
+    alphas = fill(α, length(r2))
 
 
-# ε = permitivity(Material.load("Ag.yaml"), k)
+    # 3. calculated the incident field E_inc, at each dipole,
+    pw = DDA.PlaneWave2(k, e, θ, ϕ)
+    E_inc = field(pw, r2)
 
-# d = a * spacing # ???
-kvec = [0, 0, k]
-E₀ = [e..., 0]
-α = LDR(ε, d, kvec, E₀)
 
-alphas = fill(α, length(r2))
 
+    # 4. assemble the interaction matrix A and
 
-# 3. calculated the incident field E_inc, at each dipole,
-pw = DDA.PlaneWave2(k, e, θ, ϕ)
-E_inc = field(pw, r2)
+    # memory requirements:
+    (3*N)^2 * 2 * 8 / 1024^3
 
 
+    # 5. solve for P in the system of linear equations
 
-# 4. assemble the interaction matrix A and
 
-# memory requirements:
-(3*N)^2 * 2 * 8 / 1024^3
+    A_conv = TensorConvolution(g, occ, k, α)
 
-A = DDA.interactions(k, r2, alphas)
+    Ei = reinterpret(ComplexF64, E_inc)
+    P3 = bicgstabl(A_conv, Ei; abstol=1e-4, verbose=true)
 
-# 5. solve for P in the system of linear equations
+    P = reinterpret(SVector{3,ComplexF64}, P3)
 
-Ei = reinterpret(ComplexF64, E_inc)
-# Ei = copy(reinterpret(ComplexF64, E_inc))
-Pi = A \ Ei
 
-P = reinterpret(SVector{3,ComplexF64},Pi)
 
 
 
+    # # The solution using FFT
+    # A = InteractionTensor(g, k, α, occ)
+    # P = bicgstabl(factorise(A), E; abstol=1e-8)
 
 
+    # Analyse the results
 
+    # @show DDA.C_abs(k, E₀, P, alphas)
+    # @show DDA.C_ext(k, E₀, E_inc, P)
+    # @show DDA.C_sca(k, E₀, E_inc, P, alphas)
+    @show k
+    return DDA.C_abs(k, E₀, P, alphas), DDA.C_ext(k, E₀, E_inc, P), DDA.C_sca(k, E₀, E_inc, P, alphas)
+end
+# return DDA.C_abs(k, E₀, P, alphas), DDA.C_ext(k, E₀, E_inc, P), DDA.C_sca(k, E₀, E_inc, P, alphas)
 
 
 
+k = range(0,1,length=101)[2:end]
+out = zeros(length(k), 3)
+for i = 1:length(k)
+    out[i,:] .= runtest(k[i])
+end
 
 
 
-
-
-
-
-
-P2 = bicgstabl(A, Ei; abstol=1e-5, reltol=sqrt(eps(real(ComplexF64))), verbose=false)
-
-isapprox(Pi, P2; atol=1e-5)
-
-
-
-
-
-A_conv = TensorConvolution(g, occ, k, α)
-# P_fft  = similar(E_inc)
-
-Ei = reinterpret(ComplexF64, E_inc)
-P3 = bicgstabl(A_conv, reinterpret(ComplexF64, E_inc); abstol=1e-5, verbose=true)
-
-isapprox(Pi, P3; atol=1e-5)
-
-
-
-
-
-cg!(reinterpret(ComplexF64, P_fft), A_conv, reinterpret(ComplexF64, E_inc); abstol=1e-5, reltol=sqrt(eps(real(ComplexF64))), verbose=true, maxiter=100)
-
-
-# # The solution using FFT
-# A = InteractionTensor(g, k, α, occ)
-# P = bicgstabl(factorise(A), E; abstol=1e-8)
-
-
-# Analyse the results
-
-# @show DDA.C_abs(k, E₀, P, alphas)
-# @show DDA.C_ext(k, E₀, E_inc, P)
-# @show DDA.C_sca(k, E₀, E_inc, P, alphas)
-@show d
-return DDA.C_abs(k, E₀, P, alphas), DDA.C_ext(k, E₀, E_inc, P), DDA.C_sca(k, E₀, E_inc, P, alphas)
-return DDA.C_abs(k, E₀, P, alphas), DDA.C_ext(k, E₀, E_inc, P), DDA.C_sca(k, E₀, E_inc, P, alphas)
-
-
-
-
+plot(k*13, out[:,1], label="abs", yscale=:log10, ylim=[1e0, 1.7e3])
+plot!(k*13, out[:,3], label="sca")
 
 nothing
 
@@ -454,30 +430,39 @@ E = E_sca_FF(k, r, P, r_E)
 
 
 ############################################################################
-# High-level interface for DDA calcularions
+# High-level interface for DDA calculations
 ############################################################################
 
 # 1. Define a grid
-
-Nx, Ny, Nz = 10, 10, 10
+Nx, Ny, Nz = 32, 32, 32
 origin = [0, 0, 0]
 spacing = [1, 1, 1]
 
 g = CartesianGrid(origin, spacing, (Nx, Ny, Nz))
-# g = DDA.CartesianGrid(origin, spacing, [Nx, Ny, Nz]) fails!
-
 
 # 2. Define the target(s)
+center = center(g)
+radius = 5.
 
-center = [0,0,0]
-radius = 1
+target = Sphere(center, radius)
 
-t = Sphere(center, radius)
+# 3. Define the material properties
+ε = 1.33 + 0.1im
+α = LDR(ε)
+scatterer = Scatterer(t, α)
 
+# 4. Define incindent field
+k = 2π      # wavenumber
+e = [1, 0]  # Jones polarisation vector
+θ, ϕ = 0, 0 # rotation angles [rad]
 
-# 3. Define incindent field
+E_inc = PlaneWave(k, e, θ, ϕ)
 
+# 5. Define the DDA problem
+prob = DDAGridProblem(grid, scatterer, E_inc)
 
+# 6. Solve the DDA problem
+sol = solve(prob, BiCGStablFFT(), tol=1e-12)
 
 
 
