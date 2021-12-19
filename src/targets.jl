@@ -26,6 +26,19 @@ function Base.in(p::Point, s::Disk)
 end
 
 
+# TODO: adding center
+struct TriangularPlatelets <: AbstractTarget
+    width::Float64
+    height::Float64
+end
+
+function Base.in(p::Point, s::TriangularPlatelets)
+    x, y, z = p
+    w, h = s.width, s.height
+    return  x >= - sqrt(3) / 4 * w && abs(y) <= w/4 - x/sqrt(3) && z >= 0 && z <= h
+end
+
+
 function dipoles(g::CartesianGrid{T,N}, s::AbstractTarget) where {T,N}
 
     coords = Point{N,T}[]
@@ -49,7 +62,7 @@ function discretize(g::CartesianGrid, s::AbstractTarget)
 
     for i in eachindex(g)
         coordinate = g[i]
-        
+
         if coordinate ∈ s
             occupation[i] = true
         end
