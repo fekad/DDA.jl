@@ -1,4 +1,4 @@
-# 
+#
 # !       CALPHA = polarizability prescription
 # !              = 'LATTDR' for LDR of Draine & Goodman (1993)
 # !              = 'GKDLDR' for LDR of Gutkowicz-Krusin & Draine (2004)
@@ -6,6 +6,22 @@
 # !                             of Gay-Balmaz & Martin (2002) and
 # !                             Yurkin, Min & Hoekstra (2010)
 # !              [= 'SCLDR' not supported in present version]
+
+
+
+# abstract type AbstractPolarizability end
+
+# struct IsotropicPolarizability{T<: Number} <: Number
+#     alpha::T
+# end
+#
+# struct AnisotropicPolarizability{T<: Number} <: AbstractArray
+#     alpha::T
+# end
+
+# isotropic (scalar or diagonal)
+# anisotropic (symmetric tensor)
+# homogenous vs. different
 
 @doc raw"""
     CM(eps, d)

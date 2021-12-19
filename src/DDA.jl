@@ -53,6 +53,31 @@ include("nearfield.jl")
 export TensorConvolution
 include("convolution.jl")
 
+# interfaces for the solver
+
+struct DDAGridProblem
+    grid
+    a_eff
+    scatterer
+    E_inc
+end
+
+struct DDAProblem
+    dipoles
+    a_eff
+    scatterer
+    E_inc
+end
+
+abstract type AbstractMethod end
+
+struct Direct <: AbstractMethod end
+struct Bicgstabl <: AbstractMethod end
+struct BicgstablFFT <: AbstractMethod end
+# CG
+# MINRES
+# GMRES
+# IDRs
 
 # Dipole coordinates
 # Polarizability

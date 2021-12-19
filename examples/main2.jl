@@ -71,7 +71,7 @@ k=1.
     g = CartesianGrid(origin, [d, d, d], (Nx, Ny, Nz))
 
     center = DDA.center(g)
-    radius = (Nd+.49)/2
+    radius = (Nd + .49)/2
 
     t = DDA.Sphere(center, radius)
 
@@ -486,6 +486,8 @@ ñ_Ag = Ag.n + Ag.k * im
 #
 α = LDR(ε)
 s = Scatterer(t, α)
+
+
 
 
 # 4. Define the DDA problem
