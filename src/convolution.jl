@@ -43,7 +43,7 @@ function TensorConvolution(grid::CartesianGrid, occ, k_norm, alphas)
         Ĝ[5, i, j, k] = A[2, 3] # yz
         Ĝ[6, i, j, k] = A[3, 3] # zz
     end
-    G[:, 1, 1, 1] .= zero(ComplexF64)
+    Ĝ[:, 1, 1, 1] .= zero(ComplexF64)
 
     extend!(Ĝ, Nx, Ny, Nz)
     fft!(Ĝ, 2:4)
@@ -58,6 +58,7 @@ end
 
 A::TensorConvolution * x = mul!(similar(x), A, x)
 
+# TODO: full grid input and output
 function LinearAlgebra.mul!(y::StridedVector, A::TensorConvolution, x::StridedVector)
     x = reinterpret(SVector{3,ComplexF64}, x)
     y = reinterpret(SVector{3,ComplexF64}, y)

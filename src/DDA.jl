@@ -54,30 +54,102 @@ export TensorConvolution
 include("convolution.jl")
 
 # interfaces for the solver
+abstract type PolirazabilityModels end
 
-struct DDAGridProblem
+struct LDRModel <: PolirazabilityModels
+    ε
+end
+
+# TODO: Handle multiple targets
+struct Scatterer
+    target
+    model
+end
+
+
+
+abstract type AbstractMethod end
+
+struct Direct <: AbstractMethod end
+struct BiCGStabl <: AbstractMethod end
+struct BiCGStablFFT <: AbstractMethod end
+
+# CG
+# MINRES
+# GMRES
+# IDRs
+
+abstract type AbstractProblem end
+
+# todo: a_eff
+struct GridProblem <: AbstractProblem
     grid
-    a_eff
     scatterer
     E_inc
 end
 
-struct DDAProblem
+struct DipoleProblem <: AbstractProblem
     dipoles
     a_eff
     scatterer
     E_inc
 end
 
-abstract type AbstractMethod end
+# TODO: Implement the following !!!
+# α = LDR(ε, d, kvec, E₀)
+# alphas = fill(α, length(r2))
+get_polarisbility(target, prob) = 1
 
-struct Direct <: AbstractMethod end
-struct Bicgstabl <: AbstractMethod end
-struct BicgstablFFT <: AbstractMethod end
-# CG
-# MINRES
-# GMRES
-# IDRs
+
+function solve(p::GridProblem, alg::BiCGStablFFT;
+    reltol=1e-3, verbose=true, kwargs...)
+    # @show p kwargs
+
+    # 1. create the coordinates of the dipoles,
+    coords, occ = DDA.dipoles(p.grid, p.scatterer.target)
+    # occ = DDA.discretize(p.grid, p.target)
+
+    # 2. assign the polarizability αj to each dipole
+
+    alphas = get_polarisbility(p.scatterer, p)
+
+
+    # 3. calculated the incident field E_inc, at each dipole,
+    E_inc = field(p.E_inc, coords)
+
+    k = norm(p.E_inc.k)
+
+    # 4. assemble the interaction matrix A and
+
+    A_conv = TensorConvolution(g, occ, k, alphas)
+
+    # 5. solve for P in the system of linear equations
+
+    Ei = reinterpret(ComplexF64, E_inc)
+    P = bicgstabl(A_conv, Ei; reltol=reltol, verbose=verbose)
+
+    P = reinterpret(SVector{3,ComplexF64}, P3)
+
+
+
+    return GridSolution(P, prob, alg)
+end
+
+
+abstract type AbstractSolution end
+# TODO: storing the alg and its parameters
+# TODO: storing the prepared (factorised) interaction matrix
+# TODO: do not trim A*E because it is useful for the nearfield calculations
+#
+struct GridSolution <: AbstractSolution
+    P
+    prob
+    alg
+end
+
+
+
+
 
 # Dipole coordinates
 # Polarizability

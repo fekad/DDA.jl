@@ -70,10 +70,10 @@ k=1.
 
     g = CartesianGrid(origin, [d, d, d], (Nx, Ny, Nz))
 
-    center = DDA.center(g)
+    origin = DDA.center(g)
     radius = (Nd + .49)/2
 
-    t = DDA.Sphere(center, radius)
+    t = DDA.Sphere(origin, radius)
 
     r2, occ = DDA.dipoles(g, t)
     occ = DDA.discretize(g, t)
@@ -146,7 +146,7 @@ k=1.
     A_conv = TensorConvolution(g, occ, k, α)
 
     Ei = reinterpret(ComplexF64, E_inc)
-    P3 = bicgstabl(A_conv, Ei; abstol=1e-4, verbose=true)
+    P3 = bicgstabl(A_conv, Ei; reltol=1e-4, verbose=true)
 
     P = reinterpret(SVector{3,ComplexF64}, P3)
 
@@ -241,11 +241,11 @@ spacing =  [1., 1., 1.]
 
 
 g = CartesianGrid(origin, spacing, (Nx, Ny, Nz))
-center = DDA.center(g)
+origin = DDA.center(g)
 radius = (minimum(DDA.width(g)) + 1.49)/2
 
 
-t = DDA.Sphere(center, radius)
+t = DDA.Sphere(origin, radius)
 r2, occ = DDA.dipoles(g, t)
 length(r2)
 
@@ -258,11 +258,11 @@ spacing =  [1., 1., 1.]
 
 
 g = CartesianGrid(origin, spacing, (Nx, Ny, Nz))
-center = DDA.center(g)
+origin = DDA.center(g)
 radius = (minimum(DDA.width(g)) + 1.49)/2
 
 
-t = DDA.Sphere(center, radius)
+t = DDA.Sphere(origin, radius)
 r2, occ = DDA.dipoles(g, t)
 length(r2)
 
@@ -312,10 +312,10 @@ function calc(d)
 
     g = CartesianGrid(origin, [d, d, d], (Nx, Ny, Nz))
 
-    center = DDA.center(g)
+    origin = DDA.center(g)
     radius = (minimum(DDA.width(g)) + 1.49*d)/2
 
-    t = DDA.Sphere(center, radius)
+    t = DDA.Sphere(origin, radius)
 
     r2, occ = DDA.dipoles(g, t)
     N = length(r2)
@@ -441,15 +441,15 @@ spacing = [1, 1, 1]
 g = CartesianGrid(origin, spacing, (Nx, Ny, Nz))
 
 # 2. Define the target(s)
-center = center(g)
+origin = DDA.center(g)
 radius = 5.
 
-target = Sphere(center, radius)
+target = Sphere(origin, radius)
 
 # 3. Define the material properties
 ε = 1.33 + 0.1im
-α = LDR(ε)
-scatterer = Scatterer(t, α)
+model = DDA.LDRModel(ε)
+scatterer = DDA.Scatterer(target, model)
 
 # 4. Define incindent field
 k = 2π      # wavenumber
@@ -459,10 +459,10 @@ e = [1, 0]  # Jones polarisation vector
 E_inc = PlaneWave(k, e, θ, ϕ)
 
 # 5. Define the DDA problem
-prob = DDAGridProblem(grid, scatterer, E_inc)
+prob = DDA.GridProblem(grid, scatterer, E_inc)
 
 # 6. Solve the DDA problem
-sol = solve(prob, BiCGStablFFT(), tol=1e-12)
+sol = DDA.solve(prob, DDA.BiCGStablFFT(), tol=1e-12)
 
 
 
