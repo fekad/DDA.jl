@@ -19,14 +19,8 @@ using GeometryBasics: Point, Point3
 export Point, Point3
 
 abstract type AbstractGrid{T,N} <: AbstractArray{T,N} end
-
 abstract type AbstractField end
-
 abstract type AbstractPoint{Dim,T} <: StaticVector{Dim,T} end
-
-abstract type AbstractTarget end
-# abstract type AbstractTarget{Dim,T<:Number} end
-# Base.ndims(::AbstractTarget{Dim}) where {Dim} = Dim
 
 
 # import Base
@@ -34,7 +28,7 @@ export CartesianGrid
 include("grid.jl")
 
 export Sphere, Disk
-include("targets.jl")
+include("shapes.jl")
 
 
 export CM, CMRR, GOHG, ILDR, LDR
@@ -98,20 +92,23 @@ end
 # TODO: Implement the following !!!
 # α = LDR(ε, d, kvec, E₀)
 # alphas = fill(α, length(r2))
-get_polarisbility(target, prob) = 1
+polarisbility(target, prob) = 1
+polarisbility(target, prob) = 1
 
-
+# TODO: make it unitless (x=k*a) (Works only with spheres)
 function solve(p::GridProblem, alg::BiCGStablFFT;
     reltol=1e-3, verbose=true, kwargs...)
     # @show p kwargs
 
     # 1. create the coordinates of the dipoles,
     coords, occ = DDA.dipoles(p.grid, p.scatterer.target)
-    # occ = DDA.discretize(p.grid, p.target)
 
     # 2. assign the polarizability αj to each dipole
+    alphas = polarisbility(p.scatterer.model, p)
 
-    alphas = get_polarisbility(p.scatterer, p)
+    # all in one go
+    # coords, alphas, occ = DDA.discretize(p.scatterer, p.grid, p.E_inc)
+
 
 
     # 3. calculated the incident field E_inc, at each dipole,
