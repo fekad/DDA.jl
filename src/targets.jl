@@ -1,7 +1,20 @@
-# TODO:
-# - defintion of material of the scatterers
+abstract type AbstractShape end
 
-struct Sphere <: AbstractTarget
+struct Dipole <: AbstractShape
+    center::Point3{Float64}
+end
+
+function dipoles(g::CartesianGrid{T,N}, s::Dipole) where {T,N}
+
+    ind = @. round(Int, (s.center - g.origin) / g.spacing + 1)
+    inds = [CartesianIndex(Tuple(ind)), ]
+    coords = g[inds]
+
+    return coords, inds
+end
+
+
+struct Sphere <: AbstractShape
     center::Point3{Float64}
     radius::Float64
 end
@@ -11,7 +24,7 @@ function Base.in(p::Point, s::Sphere)
 end
 
 
-struct Disk <: AbstractTarget
+struct Disk <: AbstractShape
     center::Point3{Float64}
     radius::Float64
     height::Float64
@@ -27,7 +40,7 @@ end
 
 
 # TODO: adding center
-struct TriangularPlatelets <: AbstractTarget
+struct TriangularPlatelets <: AbstractShape
     width::Float64
     height::Float64
 end
@@ -39,7 +52,7 @@ function Base.in(p::Point, s::TriangularPlatelets)
 end
 
 
-function dipoles(g::CartesianGrid{T,N}, s::AbstractTarget) where {T,N}
+function dipoles(g::CartesianGrid{T,N}, s::AbstractShape) where {T,N}
 
     coords = Point{N,T}[]
     inds = CartesianIndex{N}[]
@@ -56,7 +69,7 @@ end
 
 
 
-function discretize(g::CartesianGrid, s::AbstractTarget)
+function discretize(g::CartesianGrid, s::AbstractShape)
 
     occupation = zeros(Bool, size(g))
 
@@ -122,7 +135,7 @@ end
 
 
 
-# function dipoles(g::CartesianGrid{T,N}, s::AbstractTarget) where {T,N}
+# function dipoles(g::CartesianGrid{T,N}, s::AbstractShape) where {T,N}
 #     coords = Point{N,T}[]
 #     for ind in CartesianIndices(g)
 #         coord = g[ind]
@@ -133,7 +146,7 @@ end
 #     return coords
 # end
 
-# function dipoles2(g::CartesianGrid{T,N}, s::AbstractTarget) where {T,N}
+# function dipoles2(g::CartesianGrid{T,N}, s::AbstractShape) where {T,N}
 #
 #     coords = Point{N,T}[]
 #     inds = CartesianIndex{N}[]
