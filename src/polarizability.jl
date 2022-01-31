@@ -24,7 +24,7 @@ end
 @doc raw"""
     CM(eps, d)
 
-Calcualtes Clausius-Mossoti Polarizability of dipole array according to their refractive indexes `m` and lattice spacing `d`.
+Calculates Clausius-Mossoti Polarizability of dipole array according to their refractive indexes `m` and lattice spacing `d`.
 
 The Clausius-Mossoti polarizability of dipoles:
 ```math

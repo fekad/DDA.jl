@@ -1,4 +1,6 @@
 
+# function field(::AbstractIncidentField, r::V) where {Dim,V<:AbstractVector{<:StaticVector{Dim,<:Real}}}
+# function field(::AbstractIncidentField, r::AbstractVector{<:StaticVector{Dim,T}) where {Dim,T<:Real}}
 
 function field(f::AbstractIncidentField, r::AbstractVector{<:AbstractVector{<:Real}})
     E = similar(r, SVector{3,Complex{Float64}})
@@ -7,13 +9,6 @@ function field(f::AbstractIncidentField, r::AbstractVector{<:AbstractVector{<:Re
     end
     E
 end
-
-
-# wavevector
-# wavenumber
-# E0
-# polarisation
-
 
 
 raw"""
@@ -81,12 +76,12 @@ Arbitrary direction:
 ```
 """
 struct PlaneWave <: AbstractIncidentField
-    kvec::SVector{3,Float64}
-    E₀::SVector{3,ComplexF64}
+    kvec::SVector{3,<:Real}
+    E₀::SVector{3,Complex{<:Real}}
 end
 
 # "minimal" representation of a plane wave
-function PlaneWave(k::Float64, e::StaticVector{2,ComplexF64}, θ::Float64, ϕ::Float64)
+function PlaneWave(k::Real, e::StaticVector{2,<:Complex{<:Real}}, θ::Real, ϕ::Real)
     R = RotZY(θ, ϕ)
     E₀ = R[:, 1:2] * e
     kvec = R[:, 3] * k
@@ -96,11 +91,13 @@ end
 PlaneWave(k, e::AbstractArray, θ, ϕ) = PlaneWave(k, convert(SVector{2,ComplexF64}, e), θ, ϕ)
 
 wavenumber(f::PlaneWave) = norm(f.kvec)
+wavevector(f::PlaneWave) = f.kvec
+E0(f::PlaneWave) = norm(f.E₀)
+polarisation(f::PlaneWave) = normalize(f.E₀)
 
 field(f::PlaneWave, r::AbstractVector{<:Real}) = f.E₀ * exp(im * dot(f.kvec, r))
 
-K₀(z) = besselk(0, z)
-K₁(z) = besselk(1, z)
+
 
 struct EELS <: AbstractIncidentField
     k::Float64 # wavenumber
@@ -108,7 +105,13 @@ struct EELS <: AbstractIncidentField
     origin::SVector{2,Float64} # position in the xy plane
 end
 
-function field(f::EELS, r::Point3)
+wavenumber(f::EELS) = f.k
+wavevector(f::EELS) = SVector{3,Float64}(0, 0, f.k)
+
+K₀(z) = besselk(0, z)
+K₁(z) = besselk(1, z)
+
+function field(f::EELS, r::AbstractVector{<:Real})
     d = r[1:2] - f.origin
     dnorm = norm(d)
 
