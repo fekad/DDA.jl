@@ -55,7 +55,7 @@ end
     ]
 
 
-    A = DDA.interaction(k, r, alph)
+    A = DDA.interactions(k, r, alph)
     @test isapprox(A, A_exp; rtol=1e-4)
 
 end
