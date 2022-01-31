@@ -1,5 +1,6 @@
 # using Revise
 using DDA
+
 using RefractiveIndexDatabase
 using Permittivity
 using Unitful
@@ -12,10 +13,107 @@ using IterativeSolvers
 using Plots
 plotlyjs()
 
-# DDSCAT
-# The units must be the same as the wavelength units used in the file specifying the refractive index.
-# (x, y, z)_n = [(i, j, k)_n     + (x0, y0, z0)] × d, where d is the lattice constant (in physical units)
-# The dipole spacing d in physical units is determined from the specified value of aeff and the number N of dipoles in the target: d = (4π/3N)1/3aeff.
+
+############################################################################
+# High-level interface for DDA calculations
+############################################################################
+
+# 1. Define a grid
+Nx, Ny, Nz = 32, 32, 32
+origin = [0, 0, 0]
+spacing = [1., 1, 1]
+
+grid = CartesianGrid(origin, spacing, (Nx, Ny, Nz))
+
+# 2. Define the target(s)
+origin = DDA.center(grid)
+radius = 15.
+
+sphere = DDA.Sphere(origin, radius)
+
+# 3. Define the material properties
+ε = 1.33 + 0.1im
+model = DDA.LDRModel(ε)
+scatterer = DDA.Scatterer(sphere, model)
+
+# # ε_2 = Lorentz(params...)(k)
+# ε2 = 1.33 + 0.1im
+# single_dipole = DDA.Dipole(origin)
+# s2 = DDA.Scatterer(single_dipole, DDA.Atomic(ε2))
+#
+# scatterers = [scatterer, s2]
+
+
+# 4. Define incindent field
+k = 2π      # wavenumber
+e = [1, 0]  # Jones polarisation vector
+θ, ϕ = 0., 0. # rotation angles [rad]
+
+E_inc = PlaneWave(k, e, θ, ϕ)
+
+# 5. Define the DDA problem
+prob = DDA.GridProblem(grid, scatterer, E_inc)
+
+# 6. Solve the DDA problem
+sol = DDA.solve(prob, DDA.BiCGStablFFT(), tol=1e-12)
+
+
+
+@show DDA.C_abs(sol)
+
+
+
+
+
+# 3. Define the material properties
+# TODO: wavelelngth or frequency???
+# TODO: refractive index or permittivity???
+
+Ag = get_material("main","Ag","Johnson")
+
+λ_Ag = Ag.λ
+ñ_Ag = Ag.n + Ag.k * im
+ε_Ag = ñ_Ag.^2;
+ω_Ag = ustrip.(2π * c_0 ./ (λ_Ag * 1u"μm") .|> u"THz")
+
+ε = PermittivityTable(ω_Ag, ε_Ag)
+
+
+
+# ε = Material.gold("") ???
+# ε = Material.load("Ag.yaml")
+#
+α = LDR(ε)
+s = Scatterer(t, α)
+
+
+
+
+# 4. Define the DDA problem
+
+k = 2π      # wavenumber
+e = [1, 0]  # Jones polarisation vector
+θ, ϕ = 0, 0 # rotation angles [rad]
+
+E_inc = PlaneWave(k, e, θ, ϕ)
+
+a = 1 # effective radii ??
+
+prob = DDAGridProblem(grid, a, s, E_inc)
+
+
+# 5. Solve the DDa problem
+
+sol = solve(prob, BiCGStablFFT(), tol=1e-12)
+
+
+
+
+
+
+
+
+
 
 
 
@@ -48,17 +146,17 @@ plotlyjs()
 
 # k = 2π / λ /10 # wavenumber
 k=1.
-# function runtest(k)
+function runtest(k)
 
     # parameters
-    λ = .5      # wavelength (microns)
-    k = 2π / λ  # wavenumber
-    a = 0.39789 # effective radii (microns)
+    # λ = .5      # wavelength (microns)
+    # k = 2π / λ  # wavenumber
+    # a = 0.39789 # effective radii (microns)
     d = 1.      # spacing
     Nd = 32
-    Nd = 24
+    # Nd = 24
     e = [1, 0]  # Jones polarisation vector
-    θ, ϕ = 0, 0 # rotation angles [rad]
+    θ, ϕ = 0., 0. # rotation angles [rad]
 
     # steps:
     # 1. create the coordinates of the dipoles,
@@ -80,30 +178,35 @@ k=1.
     # r2 == g[occ]
 
     N = length(r2)
+    @show length(r2)
 
-    # a = effective radii ???
-    a_eff = (3*N*(a*d)^3/(4*pi))^(1/3)
-
-
-
-    a * d / a_eff       # d/aeff for this target [d=dipole spacing]
-    a * d / a_eff * a   # d (physical units) ???
-
-    # ----- physical extent of target volume in Target Frame ------
-    #      -0.393802      0.393802 = xmin,xmax (physical units)
-    #      -0.393802      0.393802 = ymin,ymax (physical units)
-    #      -0.393802      0.393802 = zmin,zmax (physical units)
-    Nd/2 * (a * d / a_eff * a)
-
-    a               # effective radius (physical units)
-    λ               # wavelength (in vacuo, physical units)
-    k*a             # 2*pi*aeff/lambda
+    a_eff = (N * d^3 * 3/4π)^(1/3)
+    @show radius / a_eff * 100
 
 
-    # ( 0.20619  0.00000  0.00000 ) = k vector (latt. units) in TF
-    k* (a * d / a_eff * a)
 
-
+#     # a = effective radii ???
+#
+#
+#
+#     a * d / a_eff       # d/aeff for this target [d=dipole spacing]
+#     a * d / a_eff * a   # d (physical units) ???
+#
+#     # ----- physical extent of target volume in Target Frame ------
+#     #      -0.393802      0.393802 = xmin,xmax (physical units)
+#     #      -0.393802      0.393802 = ymin,ymax (physical units)
+#     #      -0.393802      0.393802 = zmin,zmax (physical units)
+#     Nd/2 * (a * d / a_eff * a)
+#
+#     a               # effective radius (physical units)
+#     λ               # wavelength (in vacuo, physical units)
+#     k*a             # 2*pi*aeff/lambda
+#
+#
+#     # ( 0.20619  0.00000  0.00000 ) = k vector (latt. units) in TF
+#     k* (a * d / a_eff * a)
+#
+#
 
 
 
@@ -115,7 +218,7 @@ k=1.
     ε = m^2
 
     # |m|kd
-    abs(m) * k * (a * d / a_eff * a)
+    @show abs(m) * k * d
 
 
     # ε = permitivity(Material.load("Ag.yaml"), k)
@@ -129,15 +232,17 @@ k=1.
 
 
     # 3. calculated the incident field E_inc, at each dipole,
-    pw = DDA.PlaneWave2(k, e, θ, ϕ)
+    @show k, e, θ, ϕ
+    pw = DDA.PlaneWave(k, e, θ, ϕ)
     E_inc = field(pw, r2)
+
 
 
 
     # 4. assemble the interaction matrix A and
 
     # memory requirements:
-    (3*N)^2 * 2 * 8 / 1024^3
+    # (3*N)^2 * 2 * 8 / 1024^3
 
 
     # 5. solve for P in the system of linear equations
@@ -165,22 +270,26 @@ k=1.
     # @show DDA.C_ext(k, E₀, E_inc, P)
     # @show DDA.C_sca(k, E₀, E_inc, P, alphas)
     @show k
-    return DDA.C_abs(k, E₀, P, alphas), DDA.C_ext(k, E₀, E_inc, P), DDA.C_sca(k, E₀, E_inc, P, alphas)
+    # DDA.C_abs(k, E₀, P, alphas[1])
+    # DDA.C_ext(k, E₀, E_inc, P)
+    # DDA.C_sca(k, E₀, E_inc, P, alphas[1])
+    return DDA.C_abs(k, E₀, P, alphas[1]), DDA.C_ext(k, E₀, E_inc, P), DDA.C_sca(k, E₀, E_inc, P, alphas[1])
 end
+
 # return DDA.C_abs(k, E₀, P, alphas), DDA.C_ext(k, E₀, E_inc, P), DDA.C_sca(k, E₀, E_inc, P, alphas)
 
 
 
-k = range(0,1,length=101)[2:end]
+k = range(0.0,12.5/(32/2),length=101)[2:end]
 out = zeros(length(k), 3)
 for i = 1:length(k)
     out[i,:] .= runtest(k[i])
+    @show out[i,:]
 end
 
-
-
-plot(k*13, out[:,1], label="abs", yscale=:log10, ylim=[1e0, 1.7e3])
-plot!(k*13, out[:,3], label="sca")
+f = π * (32/2)^2
+plot(k*(32/2), out[:,1]/f, label="abs", yscale=:log10, ylim=[0.005, 5]);
+plot!(k*(32/2), out[:,3]/f, label="sca")
 
 nothing
 
@@ -444,12 +553,35 @@ g = CartesianGrid(origin, spacing, (Nx, Ny, Nz))
 origin = DDA.center(g)
 radius = 5.
 
-target = Sphere(origin, radius)
+sphere = Sphere(origin, radius)
 
 # 3. Define the material properties
 ε = 1.33 + 0.1im
 model = DDA.LDRModel(ε)
-scatterer = DDA.Scatterer(target, model)
+scatterer = DDA.Scatterer(sphere, model)
+
+# ε_2 = Lorentz(params...)(k)
+
+single_dipole = DDA.Dipole(origin)
+scatterer = DDA.Scatterer(single_dipole, model)
+
+scatterers = [DDA.Scatterer(sphere, model), DDA.Scatterer(single_dipole, Lorents)]
+
+
+
+
+
+
+ε = 1.33 + 0.1im
+s1 = DDA.Scatterer(Sphere(origin, radius), DDA.LDRModel(ε))
+
+ε_2 = Lorentz(params...)(k)
+s2 = Dipole(point, Direct(ε_2)) # inds ???
+
+scatterers = [s1, s2]
+
+
+
 
 # 4. Define incindent field
 k = 2π      # wavenumber
