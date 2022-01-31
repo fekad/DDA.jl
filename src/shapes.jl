@@ -1,4 +1,3 @@
-abstract type AbstractShape end
 
 struct Dipole <: AbstractShape
     origin::Point3{Float64}
@@ -34,7 +33,7 @@ end
 function Base.in(p::Point, s::Disk)
     x, y, z = p - s.origin
     r, h = s.radius, s.height
-    return abs2(x) + abs2(y) <= abs2(r) && z >= 0 && z <= h
+    return abs2(x) + abs2(y) <= abs2(r) && z >= -h/2 && z <= h/2
 end
 
 
@@ -61,6 +60,25 @@ function Base.in(p::Point, s::TriangularPlatelets)
 end
 
 
+struct Composite{I<:AbstractShape} <:AbstractShape
+    shapes::Vector{I}
+end
+
+Base.getindex(multi::Composite, ind) = getindex(multi.shapes, ind)
+Base.length(multi::Composite) = length(multi.shapes)
+Base.eltype(multi::Composite) = eltype(multi.shapes)
+Base.firstindex(multi::Composite) = firstindex(multi.shapes)
+Base.lastindex(multi::Composite) = lastindex(multi.shapes)
+Base.iterate(multi::Composite, state=1) =
+  state > length(multi) ? nothing : (multi[state], state+1)
+
+
+function Base.in(p::Point, s::Composite)
+    return mapreduce(s -> in(p, s), |, s)
+end
+
+
+
 function dipoles(g::CartesianGrid{T,N}, s::AbstractShape) where {T,N}
 
     coords = Point{N,T}[]
@@ -78,7 +96,7 @@ end
 
 
 
-function discretize(g::CartesianGrid, s::AbstractShape)
+function discretize(g::CartesianGrid, s::S) where S<:AbstractShape
 
     occupation = zeros(Bool, size(g))
 
@@ -91,5 +109,4 @@ function discretize(g::CartesianGrid, s::AbstractShape)
     end
     return occupation
 end
-
 

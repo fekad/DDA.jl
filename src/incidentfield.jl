@@ -1,4 +1,20 @@
-abstract type IncindentField <: AbstractField end
+
+
+function field(f::AbstractIncidentField, r::AbstractVector{<:AbstractVector{<:Real}})
+    E = similar(r, SVector{3,Complex{Float64}})
+    for i = 1:length(r)
+        E[i] = field(f, r[i])
+    end
+    E
+end
+
+
+# wavevector
+# wavenumber
+# E0
+# polarisation
+
+
 
 raw"""
 # Incident electric field
@@ -43,7 +59,7 @@ Linear polarized at 45° from the x axis (typically called "diagonal" L+45):
 |D\rangle = \frac{1}{\sqrt{2}} \left(|H\rangle +|V\rangle \right) = \frac{1}{\sqrt{2}} \begin{pmatrix}1\\1\end{pmatrix}
 ```
 
-Linear polarized at −45° from the x axis (typically called "anti-diagonal" L−45):
+Linear polarized at -45° from the x axis (typically called "anti-diagonal" L-45):
 ```math
 |A\rangle =\frac{1}{\sqrt{2}} \left(|H\rangle - |V\rangle\right) = \frac{1}{\sqrt{2}} \begin{pmatrix}1\\-1\end{pmatrix}
 ```
@@ -64,26 +80,29 @@ Arbitrary direction:
 \mathbf{R} \begin{pmatrix} E_{0x} e^{i\phi_{x}} \\ E_{0y} e^{i\phi_{y}} \\ 0 \end{pmatrix} e^{i (\mathbf{R} \mathbf{k}) \cdot \mathbf{r} }e^{-i \omega t}.
 ```
 """
-struct PlaneWave <: IncindentField
+struct PlaneWave <: AbstractIncidentField
     kvec::SVector{3,Float64}
     E₀::SVector{3,ComplexF64}
 end
 
 # "minimal" representation of a plane wave
-function PlaneWave(k::Float64, e::SVector{2,ComplexF64}, θ::Float64, ϕ::Float64)
+function PlaneWave(k::Float64, e::StaticVector{2,ComplexF64}, θ::Float64, ϕ::Float64)
     R = RotZY(θ, ϕ)
     E₀ = R[:, 1:2] * e
     kvec = R[:, 3] * k
     return PlaneWave(kvec, E₀)
 end
 
-field(f::PlaneWave, r::Point3) = f.E₀ * exp(im * dot(f.kvec, r))
+PlaneWave(k, e::AbstractArray, θ, ϕ) = PlaneWave(k, convert(SVector{2,ComplexF64}, e), θ, ϕ)
 
+wavenumber(f::PlaneWave) = norm(f.kvec)
+
+field(f::PlaneWave, r::AbstractVector{<:Real}) = f.E₀ * exp(im * dot(f.kvec, r))
 
 K₀(z) = besselk(0, z)
 K₁(z) = besselk(1, z)
 
-struct EELS <: IncindentField
+struct EELS <: AbstractIncidentField
     k::Float64 # wavenumber
     v::Float64 # charge velocity (propagate along z direction)
     origin::SVector{2,Float64} # position in the xy plane
@@ -102,11 +121,3 @@ function field(f::EELS, r::Point3)
     ]
 end
 
-
-function field(f::IncindentField, r::AbstractVector{Point3{T}}) where {T}
-    E = similar(r, SVector{3,ComplexF64})
-    for i = 1:length(r)
-        E[i] = field(f, r[i])
-    end
-    E
-end

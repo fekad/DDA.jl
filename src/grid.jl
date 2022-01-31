@@ -1,3 +1,4 @@
+# TODO: origin(start) spacing (steps) and dims (length)  VS start stop and length (dims)
 """
     CartesianGrid(origin, spacing, dims)
 

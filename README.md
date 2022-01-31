@@ -15,3 +15,10 @@ Discrete Dipole Approximation
 This work was carried out at UNamur in Luc Henrard's group . The authors acknowledge financial support from the Communauté Française de Belgique through the Action de Recherche Concertée (ARC - No. 19/24-102)
 SURFASCOPE - Surface Enhanced Spectroscopy by Second-Principles Calculations.
 
+
+
+solve(prob::ODEProblem,alg;kwargs)
+
+Solves the ODE defined by prob using the algorithm alg. If no algorithm is given, a default algorithm will be chosen.
+
+Solution Handling

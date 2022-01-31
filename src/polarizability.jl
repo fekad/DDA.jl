@@ -1,15 +1,13 @@
-#
-# !       CALPHA = polarizability prescription
-# !              = 'LATTDR' for LDR of Draine & Goodman (1993)
-# !              = 'GKDLDR' for LDR of Gutkowicz-Krusin & Draine (2004)
-# !              = 'FLTRCD' for filtered coupled dipole approach
-# !                             of Gay-Balmaz & Martin (2002) and
-# !                             Yurkin, Min & Hoekstra (2010)
-# !              [= 'SCLDR' not supported in present version]
+
+struct Atomic <: AbstractPolarizability
+    ε
+end
 
 
+struct LDRModel <: AbstractPolarizability
+    ε
+end
 
-# abstract type AbstractPolarizability end
 
 # struct IsotropicPolarizability{T<: Number} <: Number
 #     alpha::T
@@ -37,7 +35,7 @@ The Clausius-Mossoti polarizability of dipoles:
 - `d`: Dipole lattice spacing
 - `eps`: complex permitivirty of dipole
 """
-CM(eps, d) = 3d^3 / 4π * (eps - 1) / (eps +2)
+CM(eps, d) = d^3 * 3/ 4π * (eps - 1) / (eps + 2)
 
 """
     RR_correction(alpha, k)
@@ -108,7 +106,7 @@ function ILDR(eps, d, k)
 
 end
 
-
+# Note: called LATTDR in DDSCAT
 """
     LDR(eps, d, kvec, E₀)
 
@@ -124,6 +122,7 @@ Lattice Dispersion Relation (LDR)
 - `E0`: complex incident field amplitude
 
 """
+# function LDR(eps, d, k, knorm, Enorm)
 function LDR(eps, d, kvec, E₀)
     b1 = -1.8915316
     b2 =  0.1648469
@@ -139,6 +138,7 @@ function LDR(eps, d, kvec, E₀)
     e_hat = normalize(E₀)
 
     S = sum(1:3) do i
+        # (a_hat[i] * abs(e_hat[i]))^2
         (a_hat[i] * e_hat[i])^2
     end
     # S = sum((a_hat[i] * e_hat[i])^2 for i in 1:3)
@@ -159,3 +159,48 @@ function LDR(eps, d, kvec, E₀)
 
 end
 
+
+#
+# GKDLDR
+# ! B1 = (c_1/pi)*ak2 = (-5.9424219/pi)*ak2 = -1.8915316*ak2
+# ! B2 = (c_2/pi)*ak2 = (0.5178819/pi)*ak2 = 0.1648469*ak2
+# ! B3 = -[(3c_2+c_3)/pi]*ak2 = -[(3*0.5178819+4.0069747)/pi]*ak2
+# !                           = -1.7700004*ak2
+# ! B3L = B3*A(I)**2 where a_i = unit vector in direction of propagation
+#
+#          B1=-1.8915316_WP*AK2
+#          B2=0.1648469_WP*AK2
+#          B3=-1.7700004_WP*AK2
+#          DO L=1,3
+#             B3L=B3*AK_TF(L)*AK_TF(L)/AK2
+#             DO IA=1,NAT
+#                IC=ICOMP(IA,L)
+#                IF(IC>0)THEN
+#
+# !*** First compute Clausius-Mossotti polarizability:
+#
+#                   CXTERM=(.75_WP/PI)*(CXEPS(IC)-1._WP)/(CXEPS(IC)+2._WP)
+#
+# !*** Determine polarizability by requiring that infinite lattice of
+# !    dipoles have dipersion relation of continuum.
+#
+#
+#                   CXTERM=CXTERM/(1._WP+CXTERM*(B1+CXEPS(IC)*(B2+B3L)))
+#
+# !*** Radiative-reaction correction:
+#
+#                   CXALPH(IA,L)=CXTERM/(1._WP+CXTERM*CXRR)
+#
+# ! set off-diagonal terms to zero
+#
+#                   CXALOF(IA,L)=0._WP
+#
+#                ELSEIF(IC==0)THEN
+#
+# ! To avoid divisions by zero, etc., set CXALPH=1 for vacuum sites.
+#
+#                   CXALPH(IA,L)=1._WP
+#                   CXALOF(IA,L)=0._WP
+#                ENDIF
+#             ENDDO
+#          ENDDO

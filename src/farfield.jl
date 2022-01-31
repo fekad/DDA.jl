@@ -1,3 +1,4 @@
+# TODO:single alpha
 @doc raw"""
 The absorption cross section:
 $$
@@ -7,10 +8,22 @@ $$
 function C_abs(k, E0, P, alph)
     c = zero(Float64)
     for i in 1:length(P)
-        c += -imag(dot(P[i], 1/alph[i], P[i])) - 2 / 3 * k^3 * norm(P[i])^2
+        c += -imag(dot(P[i], 1/alph, P[i])) - 2 / 3 * k^3 * norm(P[i])^2
     end
     return 4π * k / norm(E0)^2 * c
 end
+
+function C_abs(sol::GridSolution)
+
+    P = sol.P
+    alph = sol.alphas
+
+    k = norm(sol.prob.E_inc.kvec)
+    E0 = norm(sol.prob.E_inc.E₀)
+
+    return C_abs(k, E0, P, alph)
+end
+
 
 @doc raw"""
 The extinction cross section:
@@ -25,6 +38,16 @@ function C_ext(k, E0, E_inc, P)
         c += imag(dot(E_inc[j], P[j]))
     end
     return 4π * k / norm(E0)^2 * c
+end
+
+function C_ext(sol::GridSolution)
+
+    P = sol.P
+
+    k = norm(sol.prob.E_inc.kvec)
+    E0 = norm(sol.prob.E_inc.E₀)
+
+    return C_ext(k, E0, E_inc, P)
 end
 
 @doc raw"""
