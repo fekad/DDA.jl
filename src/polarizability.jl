@@ -24,25 +24,28 @@ end
 @doc raw"""
     CM(eps, d)
 
-Calculates Clausius-Mossoti Polarizability of dipole array according to their refractive indexes `m` and lattice spacing `d`.
+Calculates Clausius-Mossoti polarizability for pointlike atoms (dipoles) on a cubic lattice where the lattice spacing is `d`.
 
 The Clausius-Mossoti polarizability of dipoles:
 ```math
-\alpha_j^{CM} = \frac{3d^3}{4\pi} \frac{\varepsilon_j - 1}{\varepsilon_j + 2}
+\alpha_j^{CM} = d^3 \frac{3}{4\pi} \frac{\varepsilon_j - 1}{\varepsilon_j + 2}
 ```
 
 # Arguments
-- `d`: Dipole lattice spacing
 - `eps`: complex permitivirty of dipole
+- `d`: Dipole lattice spacing
 """
-CM(eps, d) = d^3 * 3/ 4π * (eps - 1) / (eps + 2)
+CM(eps, d) = d^3 * 3 / 4π * (eps - 1) / (eps + 2)
 
 """
     RR_correction(alpha, k)
 
-Radiative-reaction correction
+"Radiative-reaction" correction (according to the optical theorem)
+See: B.T. Draine and J. Goodman, Astrophys. J. 405, pp. 685-697 (1993)
 """
-RR_correction(alpha, k) = alpha / (1 -  alpha * 2 / 3 * im * k^3)
+# RR_correction(alpha, k, d) = alpha / d^3 / (1 - alpha * 2 / 3 * im * (k * d)^3)
+RR_correction(alpha, k) = alpha / (1 - alpha * 2 / 3 * im * k^3)
+
 
 
 """
@@ -74,7 +77,7 @@ function GOHG(eps, d, k)
 
     alpha_CM = CM(eps, d)
 
-    alpha_NR =  alpha_CM / (1 - (4π/3)^(1/3) * alpha_CM * k^2 / d)
+    alpha_NR = alpha_CM / (1 - (4π / 3)^(1 / 3) * alpha_CM * k^2 / d)
 
     # Radiative-reaction correction:
     alpha = RR_correction(alpha_NR, k)
@@ -106,7 +109,6 @@ function ILDR(eps, d, k)
 
 end
 
-# Note: called LATTDR in DDSCAT
 """
     LDR(eps, d, kvec, E₀)
 
@@ -125,7 +127,7 @@ Lattice Dispersion Relation (LDR)
 # function LDR(eps, d, k, knorm, Enorm)
 function LDR(eps, d, kvec, E₀)
     b1 = -1.8915316
-    b2 =  0.1648469
+    b2 = 0.1648469
     b3 = -1.7700004
 
     # wavenumber
@@ -148,7 +150,7 @@ function LDR(eps, d, kvec, E₀)
 
     # Determine polarizability by requiring that infinite lattice of
     # dipoles have dipersion relation of continuum.
-    alpha_inf = alpha_CM / (1 + alpha_CM * (b1 + eps * (b2 + b3 * S)) * k^2 / d)
+    alpha_inf = alpha_CM / (1 + alpha_CM / d^3 * (b1 + eps * (b2 + b3 * S)) * (k * d)^2)
 
     # Radiative-reaction correction:
     alpha = RR_correction(alpha_inf, k)
@@ -204,3 +206,47 @@ end
 #                ENDIF
 #             ENDDO
 #          ENDDO
+
+# function FCD_Pol(DF,dV,dx,i_energy)
+#     !
+#     ! "Filtered Coupled Dipole Method" for very large refractive indices
+#     ! See: Yurkin, M. A., Min, M., & Hoekstra, A. G. (2010).
+#     ! Application of the discrete dipole approximation to very large refractive indices:
+#     ! Filtered coupled dipoles revived. Physical Review E, 82(3), 036703
+#     !
+#     use kinds             , only: pr
+#     use physical_constants, only: pi, eV_to_k0
+#     use inputs            , only: EnLoss
+#
+#     implicit none
+#     integer(kind=pr)                , intent(in) :: i_energy
+#     complex(kind=pr)                , intent(in) :: DF
+#     complex(kind=pr)                             :: CM, D, FCD_Pol, cst1, cst2, cst3
+#     real   (kind=pr)              , dimension(3) :: k
+#     real   (kind=pr)                , intent(in) :: dV, dx
+#
+#     CM = CM_Pol(DF,dV)
+#
+#     ! wave number
+#     k(1) = EnLoss(i_energy)*eV_to_k0
+#     k(2) = k(1)*k(1) ; k(3) = k(2)*k(1)
+#
+#     cst1 = (1.3333333333333333_pr)*k(2)*(dx*dx)
+#
+#     ! 4/3 = 1.3333333333333333
+#
+#     cst2 = (0.21220658488400759_pr)*log((pi - k(1)*dx)/(pi + k(1)*dx))*k(3)*dV
+#
+#     ! 2/(3*pi) = 0.21220658488400759
+#
+#     cst3 = (0.66666666666666663_pr)*(cmplx(0.0_pr,1.0_pr))*k(3)*dV
+#
+#     ! 2/3 = 0.66666666666666663
+#
+#     D = (CM/dV)*(cst1 + cst2 + cst3)
+#
+#     FCD_Pol = CM/(1.0_pr + D)
+#
+#     return
+#
+# end function FCD_Pol
