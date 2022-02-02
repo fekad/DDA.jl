@@ -32,7 +32,7 @@ function solve(p::GridProblem, alg::BiCGStablFFT;
     # alphas = polarisbility(p.scatterer.model, p)
     # coords, occ, alphas = DDA.discretize(p.grid, p.scatterer, p.Einc)
 
-    coords, occ, alphas = DDA.discretize(p)
+    coords, occ, alphas = discretize(p)
 
 
     # 3. calculated the incident field Einc, at each dipole,

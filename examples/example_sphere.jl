@@ -29,13 +29,13 @@ grid = CartesianGrid(origin, spacing, dims)
 origin = DDA.center(grid)
 radius = 5.0
 
-sphere = DDA.Sphere(origin, radius)
+sphere = Sphere(origin, radius)
 
 # 3. Define the material properties
 ε = 1.33 + 0.1im
-model = DDA.LDRModel(ε)
+model = LDRModel(ε)
 
-scatterer = DDA.Scatterer(sphere, model)
+scatterer = Scatterer(sphere, model)
 
 # 4. Define incindent field
 k = 2π      # wavenumber
@@ -45,13 +45,13 @@ e = [1, 0]  # Jones polarisation vector
 Einc = PlaneWave(k, e, θ, ϕ)
 
 # 5. Define the DDA problem
-prob = DDA.GridProblem(grid, scatterer, Einc)
+prob = GridProblem(grid, scatterer, Einc)
 
 # 6. Solve the DDA problem
-sol = DDA.solve(prob, DDA.BiCGStablFFT(), tol = 1e-5)
+sol = solve(prob, BiCGStablFFT(), tol = 1e-5)
 
 
-@show DDA.C_abs(sol)
+@show C_abs(sol)
 
 
 ############################################################################
@@ -67,23 +67,23 @@ function sphere_system(Nd, k, m)
 
     # 1. create the coordinates of the dipoles,
     grid = CartesianGrid([0.0, 0.0, 0.0], [d, d, d], (Nd, Nd, Nd))
-    sphere = DDA.Sphere(DDA.center(grid), (Nd + 0.49) / 2)
+    sphere = Sphere(DDA.center(grid), (Nd + 0.49) / 2)
 
     # 2. assign the polarizability αj to each dipole
-    scatterer = DDA.Scatterer(sphere, DDA.LDRModel(m^2))
+    scatterer = Scatterer(sphere, LDRModel(m^2))
 
     # 3. calculated the incident field Einc, at each dipole,
-    Einc = DDA.PlaneWave(k, e, θ, ϕ)
+    Einc = PlaneWave(k, e, θ, ϕ)
 
     # 5. Define the DDA problem
-    prob = DDA.GridProblem(grid, scatterer, Einc)
+    prob = GridProblem(grid, scatterer, Einc)
 
     # 6. Solve the DDA problem
-    return DDA.solve(prob, DDA.BiCGStablFFT(), tol = 1e-12)
+    return solve(prob, BiCGStablFFT(), tol = 1e-12)
 
 end
 
-# Pararmeters:
+# Parameters:
 Nd = 24
 a = Nd / 2
 
@@ -96,8 +96,8 @@ Q_sca = zeros(length(k), 3)
 for (i, k) = enumerate(k)
     local sol
     sol = sphere_system(Nd, k, m)
-    Q_abs[i] = DDA.C_abs(sol) / (π * a^2)
-    Q_sca[i] = DDA.C_sca(sol) / (π * a^2)
+    Q_abs[i] = C_abs(sol) / (π * a^2)
+    Q_sca[i] = C_sca(sol) / (π * a^2)
 end
 
 plot(k * a, Q_abs, label = "abs", yscale = :log10, ylim = [0.005, 5]);
@@ -123,9 +123,9 @@ function sphere_system_steps(Nd, k, m)
     origin = DDA.center(g)
     radius = (Nd + 0.49) / 2
 
-    t = DDA.Sphere(origin, radius)
+    t = Sphere(origin, radius)
 
-    occ = DDA.discretize(g, t)
+    occ = discretize(g, t)
     coords = g[occ]
 
     N = length(coords)
@@ -144,7 +144,7 @@ function sphere_system_steps(Nd, k, m)
     α = LDR(ε, d, kvec, E₀)
     alphas = fill(α, length(coords))
 
-    pw = DDA.PlaneWave(k, e, θ, ϕ)
+    pw = PlaneWave(k, e, θ, ϕ)
 
     Einc = similar(coords, SVector{3,Complex{Float64}})
     for i = eachindex(coords)
@@ -155,7 +155,7 @@ function sphere_system_steps(Nd, k, m)
     # The solution using FFT
     # A = InteractionTensor(g, k, α, occ)
     # P = bicgstabl(factorise(A), E; abstol=1e-8)
-    A_conv = TensorConvolution(g, occ, k, α)
+    A_conv = DDA.TensorConvolution(g, occ, k, α)
 
     # memory requirements:
     # (3*N)^2 * 2 * 8 / 1024^3
@@ -168,7 +168,7 @@ function sphere_system_steps(Nd, k, m)
 
     # 6. Analyse the results
 
-    return DDA.C_abs(k, E₀, P, alphas[1]), DDA.C_ext(k, E₀, Einc, P), DDA.C_sca(k, E₀, Einc, P, alphas[1])
+    return C_abs(k, E₀, P, alphas[1]), C_ext(k, E₀, Einc, P), C_sca(k, E₀, Einc, P, alphas[1])
 
 end
 

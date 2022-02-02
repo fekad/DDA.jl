@@ -33,21 +33,28 @@ abstract type AbstractSolution end
 
 
 export CartesianGrid
+# export spacing, width, center
 include("grid.jl")
 
-export Sphere, Disk
+export Dipole, Sphere, Disk
+export discretize
 include("shapes.jl")
+
+export  Atomic, LDRModel
 export CM, CMRR, GOHG, ILDR, LDR
 include("polarizability.jl")
+export Scatterer
 include("scatterer.jl")
 
 export PlaneWave, field
 include("incidentfield.jl")
 
-export TensorConvolution
+export GridProblem, DipoleProblem
 include("problems.jl")
+export solve, Direct, BiCGStabl, BiCGStablFFT
 include("solvers.jl")
 
+export C_abs, C_ext, C_sca
 include("farfield.jl")
 include("nearfield.jl")
 
