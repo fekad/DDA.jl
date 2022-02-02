@@ -8,21 +8,13 @@ $$
 function C_abs(k, E0, P, alph)
     c = zero(Float64)
     for i in 1:length(P)
-        c += -imag(dot(P[i], 1/alph, P[i])) - 2 / 3 * k^3 * norm(P[i])^2
+        c += -imag(dot(P[i], 1 / alph, P[i])) - 2 / 3 * k^3 * norm(P[i])^2
     end
     return 4π * k / norm(E0)^2 * c
 end
 
-function C_abs(sol::GridSolution)
+C_abs(sol::GridSolution) = C_abs(norm(sol.prob.Einc.kvec), norm(sol.prob.Einc.E₀), sol.P, sol.alphas)
 
-    P = sol.P
-    alph = sol.alphas
-
-    k = norm(sol.prob.Einc.kvec)
-    E0 = norm(sol.prob.Einc.E₀)
-
-    return C_abs(k, E0, P, alph)
-end
 
 
 @doc raw"""
@@ -40,15 +32,7 @@ function C_ext(k, E0, Einc, P)
     return 4π * k / norm(E0)^2 * c
 end
 
-function C_ext(sol::GridSolution)
-
-    P = sol.P
-
-    k = norm(sol.prob.Einc.kvec)
-    E0 = norm(sol.prob.Einc.E₀)
-
-    return C_ext(k, E0, Einc, P)
-end
+C_ext(sol::GridSolution)= C_ext(norm(sol.prob.Einc.kvec), norm(sol.prob.Einc.E₀), sol.Einc, sol.P)
 
 @doc raw"""
 The scattering cross section
@@ -57,3 +41,5 @@ C_{sca} = C_{ext} - C_{abs}
 $$
 """
 C_sca(k, E0, Einc, P, alph) = C_ext(k, E0, Einc, P) - C_abs(k, E0, P, alph)
+
+C_sca(sol::GridSolution) = C_ext(sol) - C_abs(sol)

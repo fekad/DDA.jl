@@ -16,12 +16,12 @@ struct BiCGStablFFT <: AbstractMethod end
 struct GridSolution <: AbstractSolution
     P
     alphas
+    Einc
     prob
     alg
 end
 
 
-# TODO: make it unitless (x=k*a) (Works only with spheres)
 function solve(p::GridProblem, alg::BiCGStablFFT;
     reltol=1e-3, verbose=true, kwargs...)
 
@@ -57,7 +57,7 @@ function solve(p::GridProblem, alg::BiCGStablFFT;
 
     bicgstabl!(reinterpret(ComplexF64, P), A_conv, reinterpret(ComplexF64, Einc); reltol=reltol, verbose=verbose)
 
-    return GridSolution(P, alphas, p, alg)
+    return GridSolution(P, alphas, Einc, p, alg)
 end
 
 

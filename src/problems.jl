@@ -1,7 +1,7 @@
 
 struct DipoleProblem <: AbstractProblem
     dipoles
-    scatterer
+    alphas
     Einc
 end
 
@@ -80,7 +80,6 @@ end
 
 # TODO: allpha is a 3x3 (symmetric) tensor by defualt )
 calc_Ajj(alph) = Diagonal(1 / alph * I, 3)
-
 
 
 function interactions(k, r, alph)

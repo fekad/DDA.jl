@@ -91,17 +91,17 @@ m = 1.33 + 0.01im
 
 k = range(0., 12.5 / a, length = 101)[2:end]
 Q_abs = zeros(length(k), 3)
-# Q_sca = zeros(length(k), 3)
+Q_sca = zeros(length(k), 3)
 
 for (i, k) = enumerate(k)
     local sol
     sol = sphere_system(Nd, k, m)
     Q_abs[i] = DDA.C_abs(sol) / (π * a^2)
-    # Q_sca[i] = DDA.C_sca(sol) / (π * a^2)
+    Q_sca[i] = DDA.C_sca(sol) / (π * a^2)
 end
 
 plot(k * a, Q_abs, label = "abs", yscale = :log10, ylim = [0.005, 5]);
-# plot!(k * a, Q_sca, label = "sca")
+plot!(k * a, Q_sca, label = "sca")
 
 
 
