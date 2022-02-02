@@ -1,16 +1,3 @@
-
-# function field(::AbstractIncidentField, r::V) where {Dim,V<:AbstractVector{<:StaticVector{Dim,<:Real}}}
-# function field(::AbstractIncidentField, r::AbstractVector{<:StaticVector{Dim,T}) where {Dim,T<:Real}}
-
-function field(f::AbstractIncidentField, r::AbstractVector{<:AbstractVector{<:Real}})
-    E = similar(r, SVector{3,Complex{Float64}})
-    for i = 1:length(r)
-        E[i] = field(f, r[i])
-    end
-    E
-end
-
-
 raw"""
 # Incident electric field
 

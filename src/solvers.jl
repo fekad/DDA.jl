@@ -24,34 +24,38 @@ end
 # TODO: make it unitless (x=k*a) (Works only with spheres)
 function solve(p::GridProblem, alg::BiCGStablFFT;
     reltol=1e-3, verbose=true, kwargs...)
-    # @show p kwargs
 
-#     # 1. create the coordinates of the dipoles,
-#     # coords, inds = DDA.dipoles(p.grid, p.scatterer.target)
-#     occ = DDA.discretize(p.grid, p.scatterer.target)
-#
-#     # 2. assign the polarizability αj to each dipole
-#     alphas = polarisbility(p.scatterer.model, p)
+    # 1. create the coordinates of the dipoles
+    # 2. assign the polarizability αj to each dipole
+    # occ = DDA.discretize(p.grid, p.scatterer.target)
+    # coords = p.grid[occ]
+    # alphas = polarisbility(p.scatterer.model, p)
+    # coords, occ, alphas = DDA.discretize(p.grid, p.scatterer, p.Einc)
 
-
-    occ, alphas = DDA.discretize(p, p.scatterer)
-    # coords, alphas, occ = DDA.discretize(p.scatterer, p.grid, p.Einc)
+    coords, occ, alphas = DDA.discretize(p)
 
 
     # 3. calculated the incident field Einc, at each dipole,
-    Einc = field(p.Einc, p.grid[occ])
+    # Einc = field(p.Einc, p.grid[occ])
+
+    Einc = similar(coords, SVector{3,Complex{Float64}})
+    for i = eachindex(coords)
+        Einc[i] = field(p.Einc, coords[i])
+    end
 
 
     # 4. assemble the interaction matrix A and
+
     k = wavenumber(p.Einc)
     A_conv = TensorConvolution(p.grid, occ, k, alphas)
 
+
     # 5. solve for P in the system of linear equations
 
-    Ei = reinterpret(ComplexF64, Einc)
-    P = bicgstabl(A_conv, Ei; reltol=reltol, verbose=verbose)
+    P = similar(coords, SVector{3,Complex{Float64}})
+    fill!(P, zero(SVector{3,Complex{Float64}}))
 
-    P = reinterpret(SVector{3,ComplexF64}, P)
+    bicgstabl!(reinterpret(ComplexF64, P), A_conv, reinterpret(ComplexF64, Einc); reltol=reltol, verbose=verbose)
 
     return GridSolution(P, alphas, p, alg)
 end

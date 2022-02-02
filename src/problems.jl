@@ -12,6 +12,20 @@ struct GridProblem <: AbstractProblem
 end
 
 
+
+function discretize(p::GridProblem)
+    # 1. create the coordinates of the dipoles,
+    occ = DDA.discretize(p.grid, p.scatterer.target)
+
+    # 2. assign the polarizability αj to each dipole
+    alphas = polarisbility(p.scatterer.model, p)
+
+    coords = p.grid[occ]
+    return coords, occ, alphas
+end
+
+
+
 function discretize(p::GridProblem, s::Scatterer)
     # 1. create the coordinates of the dipoles,
     occ = DDA.discretize(p.grid, s.target)
@@ -90,8 +104,6 @@ function interactions(k, r, alph)
     # DDA.calc_Ajk(k, r[2], r[1])
     return Symmetric(reshape(out, 3N, 3N), :L)
 end
-
-
 
 
 
