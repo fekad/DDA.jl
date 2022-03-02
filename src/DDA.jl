@@ -22,6 +22,7 @@ using SpecialFunctions: besselk
 using PhysicalConstants.CODATA2018: ħ, ε_0, e as q
 
 # Definition of interfaces
+# abstract type AbstractGrid{T,N}end
 abstract type AbstractGrid{T,N} <: AbstractArray{T,N} end
 abstract type AbstractShape end
 abstract type AbstractPolarizability end
@@ -49,13 +50,15 @@ include("scatterer.jl")
 export PlaneWave, field
 include("incidentfield.jl")
 
+export C_abs, C_ext, C_sca
+include("crossection.jl")
+include("electricfield.jl")
+
 export GridProblem, DipoleProblem
 include("problems.jl")
+
 export solve, Direct, BiCGStabl, BiCGStablFFT
 include("solvers.jl")
 
-export C_abs, C_ext, C_sca
-include("farfield.jl")
-include("nearfield.jl")
 
 end # module DDA

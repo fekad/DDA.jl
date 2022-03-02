@@ -1,6 +1,6 @@
 
 """
-CartesianGrid(origin, spacing, dims)
+    CartesianGrid(origin, spacing, dims)
 
 A Cartesian grid with dimensions `dims`, lower left corner at `origin`
 and cell spacing `spacing`.

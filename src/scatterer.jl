@@ -1,5 +1,6 @@
 # TODO: Handle multiple targets
-struct Scatterer <: AbstractScatterer
-    target
-    model
+
+struct Scatterer{T<:AbstractShape,M<:AbstractPolarizability} <: AbstractScatterer
+    target::T
+    model::M
 end

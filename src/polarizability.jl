@@ -9,6 +9,15 @@ struct LDRModel <: AbstractPolarizability
 end
 
 
+# Polarizability (homogenous vs. different everywhere)
+# - isotropic (scalar or diagonal):
+#   - signle value
+#   - 3x3 diagonal matrix with the same element
+# - anisotropic (symmetric tensor):
+#   - 3x3 diagonal matrix with different elements
+#   - 3x3 general symmetric matrix
+#
+
 # struct IsotropicPolarizability{T<: Number} <: Number
 #     alpha::T
 # end
@@ -17,9 +26,7 @@ end
 #     alpha::T
 # end
 
-# isotropic (scalar or diagonal)
-# anisotropic (symmetric tensor)
-# homogenous vs. different
+
 
 @doc raw"""
     CM(eps, d)
