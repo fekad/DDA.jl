@@ -65,13 +65,9 @@ alphas = fill(LDR(ε, d, kvec, E₀), size(coords))
 pw = PlaneWave(SVector(kvec...), SVector(E₀...))
 Eincs = [field(pw, coord) for coord in coords ]
 
-
 # 4. assemble the interaction matrix A and
-prob = DipoleProblem(k, norm(E₀), coords, alphas, Eincs)
-# prob = GridProblem(grid, scatterer, Einc)
-
 # A = DDA.interactions(k, dipoles, alphas)
-
+prob = DipoleProblem(k, norm(E₀), coords, alphas, Eincs)
 
 # 5. solve for P in the system of linear equations
 # P = minres(A, reinterpret(ComplexF64,Eincs), verbose=:true)

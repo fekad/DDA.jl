@@ -46,6 +46,8 @@ include("scatterer.jl")
 export PlaneWave, field
 include("incidentfield.jl")
 
+include("interaction.jl")
+
 export C_abs, C_ext, C_sca
 include("crossection.jl")
 include("electricfield.jl")
@@ -53,7 +55,7 @@ include("electricfield.jl")
 export GridProblem, DipoleProblem
 include("problems.jl")
 
-export solve, Direct, BiCGStabl, BiCGStablFFT
+export solve, Direct, BiCGStabl
 include("solvers.jl")
 
 
