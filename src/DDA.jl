@@ -22,12 +22,8 @@ using SpecialFunctions: besselk
 using PhysicalConstants.CODATA2018: ħ, ε_0, e as q
 
 # Definition of interfaces
-# abstract type AbstractGrid{T,N}end
-abstract type AbstractGrid{T,N} <: AbstractArray{T,N} end
-abstract type AbstractShape end
 abstract type AbstractPolarizability end
 abstract type AbstractScatterer end
-abstract type AbstractIncidentField end
 abstract type AbstractProblem end
 abstract type AbstractMethod end
 abstract type AbstractSolution end
@@ -38,7 +34,7 @@ export CartesianGrid
 include("grid.jl")
 
 export Dipole, Sphere, Disk
-export discretize
+export discretize, dipoles, indices
 include("shapes.jl")
 
 export  Atomic, LDRModel

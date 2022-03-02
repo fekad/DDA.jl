@@ -1,24 +1,97 @@
+# 1. load or create the coordinates of the dipoles,
+# 2. load or assign the polarizability αj to each dipole,
+# 3. calculated the incident field Einc,j at each dipole,
+# 4. assemble the interaction matrix A and
+# 5. solve for P in the system of linear equations
+#
 
+# doi:10.1016/j.jqsrt.2011.03.012
+# Knowing Pj, other quantities such as
+# - the scattered field,
+# - dipole force,
+# - Poynting vector,
+# - extinction,
+# - absorption and
+# - scattering cross sections,
+# - phase function,
+# - Mueller matrix etc.
+# can be calculated.
+
+
+
+# TODO: allpha is a 3x3 (symmetric) tensor by defualt )
+# calc_Ajj(alph) = Diagonal(1 / alph * I, 3)
+
+
+# """
+#     FrequencySimulation([particles::AbstractParticles=[],]
+#                         source::AbstractSource)
+# Build a FrequencySimulation. If particles are not provided, an empty array is used.
+# After building, you can [`run`](@ref) the simulation to get a [`FrequencySimulationResult`](@ref).
+# """
+# mutable struct FrequencySimulation{Dim,P<:PhysicalMedium} <: Simulation{Dim}
+#     "Vector of particles, can be of different types."
+#     particles::AbstractParticles
+#     "RegularSource wave, where source.medium is the background medium of the simulation."
+#     source::AbstractSource{P}
+# end
+
+# High level
+# mutable struct DipoleProblem <: AbstractProblem
+#     "Vector of scatterers, can be of different types."
+#     scatterers::Vector{S} where S<:AbstractScatterer
+#     "single or as many as scatterers"
+#     grid
+#     "RegularSource wave, where source.medium is the background medium of the simulation."
+#     Einc
+# end
+
+# low-level structure (with high level constructors)
 struct DipoleProblem <: AbstractProblem
+    k
+    E0
     dipoles
     alphas
-    Einc
+    Eincs
+end
+
+
+# struct DipoleProblem{Dim, T<:AbstractFloat} <: AbstractProblem
+#     k::T
+#     dipoles::Vector{V} where V<:StaticVector{Dim,T}
+#     alphas::Vector{Complex{T}}
+#     Eincs::Vector{C} where C<:StaticVector{Dim, <:Complex{T}}
+# end
+
+
+struct DipoleProblemHigh{Dim,T<:AbstractFloat} <: AbstractProblem
+    scatterers::Vector{AbstractScatterer} # dipoles + alphas
+    Eincs::AbstractIncidentField
+end
+
+
+struct GridProblem2 <: AbstractProblem
+    grid
+    inds
+    alphas
+    Eincs
+    k
 end
 
 struct GridProblem <: AbstractProblem
     grid
-    scatterer
+    scatterers
     Einc
 end
 
 
-
+# TODO: move this to solvers + for s in scatterers (merging)
 function discretize(p::GridProblem)
     # 1. create the coordinates of the dipoles,
-    occ = DDA.discretize(p.grid, p.scatterer.target)
+    occ = discretize(p.grid, p.scatterers.target)
 
     # 2. assign the polarizability αj to each dipole
-    alphas = polarisbility(p.scatterer.model, p)
+    alphas = polarisbility(p.scatterers.model, p)
 
     coords = p.grid[occ]
     return coords, occ, alphas
@@ -28,7 +101,7 @@ end
 
 function discretize(p::GridProblem, s::Scatterer)
     # 1. create the coordinates of the dipoles,
-    occ = DDA.discretize(p.grid, s.target)
+    occ = discretize(p.grid, s.target)
 
     # 2. assign the polarizability αj to each dipole
     alphas = polarisbility(s.model, p)
@@ -65,7 +138,9 @@ A_{jk} = \frac{\exp(i k r_{jk})}{r_{jk}} \left[
 \right]
 $$
 """
-function calc_Ajk(k, r_jk)
+function calc_Ajk(k,  rj, rk)
+    r_jk = rj - rk
+
     r = norm(r_jk)
     rn = r_jk / r
 
@@ -73,13 +148,7 @@ function calc_Ajk(k, r_jk)
     return A_jk
 end
 
-function calc_Ajk(k, rj, rk)
-    r_jk = rj - rk
-    return calc_Ajk(k, r_jk)
-end
-
-# TODO: allpha is a 3x3 (symmetric) tensor by defualt )
-calc_Ajj(alph) = Diagonal(1 / alph * I, 3)
+calc_Ajj(alph::T) where T<:Number = Diagonal(1 / alph * I, 3)
 
 
 function interactions(k, r, alph)
@@ -87,15 +156,12 @@ function interactions(k, r, alph)
     out = zeros(ComplexF64, 3, N, 3, N)
 
     for i in 1:N
-        # out[i,i,:,:] = 1/alph[i] * I
+        # out[:,i,:,i] = 1/alph[i] * I
         out[:,i,:,i] = calc_Ajj(alph[i])
     end
 
     for i in 2:N
         for j in 1:i - 1
-            # @show i, j
-            # @show k, r[i], r[j]
-            # @show DDA.calc_Ajk(k, r[i], r[j])
             out[:,i,:,j] = calc_Ajk(k, r[i], r[j])
         end
     end
@@ -111,7 +177,7 @@ end
 """
     TensorConvolution(...)
 
-A preplanned, circular convolution operator on an M × N matrix of data of type T
+A preplanned, circular convolution operator on an M x N matrix of data of type T
 
 # Fields
 - `Ĝ`: DFT coefficients of the convolution kernel
@@ -225,3 +291,6 @@ function extend!(Ĝ::Array{ComplexF64,4}, Nx, Ny, Nz)
     Ĝ[:, Nx+2:2Nx, Ny+2:2Ny, Nz+2:2Nz] = Ĝ[:, Nx:-1:2, Ny:-1:2, Nz:-1:2]   # xyz
 
 end
+
+
+

@@ -1,3 +1,5 @@
+abstract type AbstractIncidentField{Dim,T} end
+
 raw"""
 # Incident electric field
 
@@ -62,20 +64,22 @@ Arbitrary direction:
 \mathbf{R} \begin{pmatrix} E_{0x} e^{i\phi_{x}} \\ E_{0y} e^{i\phi_{y}} \\ 0 \end{pmatrix} e^{i (\mathbf{R} \mathbf{k}) \cdot \mathbf{r} }e^{-i \omega t}.
 ```
 """
-struct PlaneWave <: AbstractIncidentField
-    kvec::SVector{3,<:Real}
-    E₀::SVector{3,Complex{<:Real}}
+struct PlaneWave{Dim,T<:AbstractFloat} <: AbstractIncidentField{Dim,T}
+    kvec::StaticVector{Dim,T}
+    E₀::StaticVector{Dim,Complex{T}}
 end
 
 # "minimal" representation of a plane wave
-function PlaneWave(k::Real, e::StaticVector{2,<:Complex{<:Real}}, θ::Real, ϕ::Real)
+function PlaneWave(k, e, θ, ϕ)
+
     R = RotZY(θ, ϕ)
     E₀ = R[:, 1:2] * e
     kvec = R[:, 3] * k
-    return PlaneWave(kvec, E₀)
+
+    T = Float64
+    return PlaneWave(SVector{3,T}(kvec...), SVector{3,Complex{T}}(E₀...))
 end
 
-PlaneWave(k, e::AbstractArray, θ, ϕ) = PlaneWave(k, convert(SVector{2,ComplexF64}, e), θ, ϕ)
 
 wavenumber(f::PlaneWave) = norm(f.kvec)
 wavevector(f::PlaneWave) = f.kvec
@@ -86,14 +90,14 @@ field(f::PlaneWave, r::AbstractVector{<:Real}) = f.E₀ * exp(im * dot(f.kvec, r
 
 
 
-struct EELS <: AbstractIncidentField
-    k::Float64 # wavenumber
-    v::Float64 # charge velocity (propagate along z direction)
-    origin::SVector{2,Float64} # position in the xy plane
+struct EELS{Dim,T} <: AbstractIncidentField{Dim,T}
+    k::T # wavenumber
+    v::T # charge velocity (propagate along z direction)
+    origin::SVector{2,T} # position in the xy plane
 end
 
 wavenumber(f::EELS) = f.k
-wavevector(f::EELS) = SVector{3,Float64}(0, 0, f.k)
+wavevector(f::EELS{Dim,T}) where {Dim,T} = SVector{Dim,T}(0, 0, f.k)
 
 K₀(z) = besselk(0, z)
 K₁(z) = besselk(1, z)
