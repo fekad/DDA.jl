@@ -4,14 +4,14 @@ struct Dipole{Dim,T} <: AbstractShape{Dim,T}
     origin::StaticVector{Dim,T}
 end
 
-function dipoles(g::CartesianGrid{Dim,T}, s::Dipole{Dim,T}) where {Dim,T}
-
-    ind = @. round(Int, (s.origin - g.origin) / g.spacing + 1)
-    inds = [CartesianIndex(Tuple(ind)),]
-    coords = g[inds]
-
-    return coords, inds
-end
+# function dipoles(g::CartesianGrid{Dim,T}, s::Dipole{Dim,T}) where {Dim,T}
+#
+#     ind = @. round(Int, (s.origin - g.origin) / g.spacing + 1)
+#     inds = [CartesianIndex(Tuple(ind)),]
+#     coords = g[inds]
+#
+#     return coords
+# end
 
 
 struct Sphere{Dim,T} <: AbstractShape{Dim,T}
@@ -79,7 +79,7 @@ function Base.in(p::StaticVector{Dim,T}, s::Composite{Dim,T}) where {Dim,T}
 end
 
 
-function dipoles(g::CartesianGrid{Dim,T,V}, s::AbstractShape{Dim,T}) where {Dim,T,V}
+function coordinates(g::CartesianGrid{Dim,T,V}, s::AbstractShape{Dim,T}) where {Dim,T,V}
 
     coords = V[]
 

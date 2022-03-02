@@ -1,52 +1,56 @@
+abstract type AbstractMethod end
 
+struct Direct <: AbstractMethod end
+struct BiCGStabl <: AbstractMethod end
 # CG
 # MINRES
 # GMRES
 # IDRs
 
-struct Direct <: AbstractMethod end
-struct BiCGStabl <: AbstractMethod end
+
+abstract type AbstractSolution end
 
 C_sca(sol::AbstractSolution) = C_ext(sol) - C_abs(sol)
 
 # TODO: storing the alg and its parameters
-# TODO: storing the prepared (factorised) interaction matrix
+# TODO: storing the prepared (factorised) interaction matrix (like in EELS calculations)
 # TODO: do not trim A*E because it is useful for the nearfield calculations
 
 struct GridSolution <: AbstractSolution
     P
-    alphas
-    Einc
     prob
     alg
 end
-C_abs(sol::GridSolution) = C_abs(norm(sol.prob.Einc.kvec), norm(sol.prob.Einc.E₀), sol.P, sol.alphas)
-C_ext(sol::GridSolution)= C_ext(norm(sol.prob.Einc.kvec), norm(sol.prob.Einc.E₀), sol.Eincs, sol.P)
+
+C_abs(sol::GridSolution)   = C_abs(sol.prob.k, sol.prob.E0, sol.P, sol.prob.alphas)
+C_ext(sol::GridSolution)   = C_ext(sol.prob.k, sol.prob.E0, sol.prob.Eincs, sol.P)
+# C_abs(sol::GridSolution) = C_abs(norm(sol.prob.k), norm(sol.prob.E0), sol.P, sol.prob.alphas)
+# C_ext(sol::GridSolution)= C_ext(norm(sol.prob.k), norm(sol.prob.E0), sol.prob.Eincs, sol.P)
 
 
-# TODO: move this to solvers + for s in scatterers (merging)
-function discretize(p::GridProblem)
-    # 1. create the coordinates of the dipoles,
-    occ = discretize(p.grid, p.scatterers.target)
-
-    # 2. assign the polarizability αj to each dipole
-    alphas = polarisbility(p.scatterers.model, p)
-
-    coords = p.grid[occ]
-    return coords, occ, alphas
-end
-
-
-
-function discretize(p::GridProblem, s::Scatterer)
-    # 1. create the coordinates of the dipoles,
-    occ = discretize(p.grid, s.target)
-
-    # 2. assign the polarizability αj to each dipole
-    alphas = polarisbility(s.model, p)
-
-    return occ, alphas
-end
+# # TODO: move this to solvers + for s in scatterers (merging)
+# function discretize(p::GridProblem)
+#     # 1. create the coordinates of the dipoles,
+#     occ = discretize(p.grid, p.scatterers.target)
+#
+#     # 2. assign the polarizability αj to each dipole
+#     alphas = polarisbility(p.scatterers.model, p)
+#
+#     coords = p.grid[occ]
+#     return coords, occ, alphas
+# end
+#
+#
+#
+# function discretize(p::GridProblem, s::Scatterer)
+#     # 1. create the coordinates of the dipoles,
+#     occ = discretize(p.grid, s.target)
+#
+#     # 2. assign the polarizability αj to each dipole
+#     alphas = polarisbility(s.model, p)
+#
+#     return occ, alphas
+# end
 
 
 # TODO: adding parametic types like here: https://github.com/JuliaMatrices/ToeplitzMatrices.jl/blob/master/src/ToeplitzMatrices.jl
@@ -79,14 +83,14 @@ Base.size(A::TensorConvolution) = (3 * length(A.inds), 3 * length(A.inds))
 Base.size(A::TensorConvolution, i::Int) = size(A)[i]
 
 
-function TensorConvolution(grid::CartesianGrid, occ, k_norm, alphas)
+function TensorConvolution(grid::CartesianGrid, inds, k_norm, alphas)
 
     Nx, Ny, Nz = size(grid)
     Ĝ = Array{ComplexF64}(undef, 6, 2Nx, 2Ny, 2Nz)
 
     for i = 1:Nx, j = 1:Ny, k = 1:Nz
         Rij = grid[i, j, k]
-        A = DDA.calc_Ajk(k_norm, Rij)
+        A = calc_Ajk(k_norm, Rij)
         Ĝ[1, i, j, k] = A[1, 1] # xx
         Ĝ[2, i, j, k] = A[1, 2] # xy
         Ĝ[3, i, j, k] = A[1, 3] # xz
@@ -102,7 +106,6 @@ function TensorConvolution(grid::CartesianGrid, occ, k_norm, alphas)
     tmp = zeros(ComplexF64, 3, 2Nx, 2Ny, 2Nz)
     F = FFTW.plan_fft!(tmp, 2:4, flags = FFTW.ESTIMATE)
 
-    inds = findall(occ)
     TensorConvolution{typeof(F)}(Ĝ, F, inds, alphas, tmp)
 end
 
@@ -134,7 +137,7 @@ function LinearAlgebra.mul!(y::StridedVector, A::TensorConvolution, x::StridedVe
     A.F \ A.tmp # inverse FFT
 
     for i in eachindex(y)
-        y[i] = A.tmp[:, A.inds[i]] .+ 1 / A.alphas * x[i]
+        y[i] = A.tmp[:, A.inds[i]] .+ inv(A.alphas[i]) * x[i]
     end
 
     return y
@@ -171,7 +174,6 @@ end
 
 
 
-
 function solve(p::GridProblem, alg::BiCGStabl;
     reltol=1e-3, verbose=true, kwargs...)
 
@@ -196,7 +198,7 @@ function solve(p::GridProblem, alg::BiCGStabl;
 
     # 4. assemble the interaction matrix A and
 
-    A = TensorConvolution(p.grid, p.occ, p.k, p.alphas)
+    A = TensorConvolution(p.grid, p.inds, p.k, p.alphas)
 
 
     # 5. solve for P in the system of linear equations
@@ -208,9 +210,8 @@ function solve(p::GridProblem, alg::BiCGStabl;
 
     bicgstabl!(reinterpret(Complex{T}, P), A, reinterpret(Complex{T}, p.Eincs); reltol=reltol, verbose=verbose, kwargs...)
 
-    return GridSolution(P, alphas, Einc, p, alg)
+    return GridSolution(P, p, alg)
 end
-
 
 
 struct DipoleSolution <: AbstractSolution

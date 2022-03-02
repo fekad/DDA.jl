@@ -1,3 +1,4 @@
+abstract type AbstractPolarizability end
 
 struct Atomic <: AbstractPolarizability
     ε

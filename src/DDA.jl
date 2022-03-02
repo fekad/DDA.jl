@@ -21,20 +21,13 @@ using Rotations: RotZY
 using SpecialFunctions: besselk
 using PhysicalConstants.CODATA2018: ħ, ε_0, e as q
 
-# Definition of interfaces
-abstract type AbstractPolarizability end
-abstract type AbstractScatterer end
-abstract type AbstractProblem end
-abstract type AbstractMethod end
-abstract type AbstractSolution end
-
 
 export CartesianGrid
 # export spacing, width, center
 include("grid.jl")
 
 export Dipole, Sphere, Disk
-export discretize, dipoles, indices
+export discretize, coordinates, indices
 include("shapes.jl")
 
 export  Atomic, LDRModel

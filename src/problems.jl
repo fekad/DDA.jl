@@ -1,3 +1,5 @@
+abstract type AbstractProblem end
+
 # 1. load or create the coordinates of the dipoles,
 # 2. load or assign the polarizability αj to each dipole,
 # 3. calculated the incident field Einc,j at each dipole,
@@ -16,7 +18,6 @@
 # - phase function,
 # - Mueller matrix etc.
 # can be calculated.
-
 
 
 # TODO: allpha is a 3x3 (symmetric) tensor by defualt )

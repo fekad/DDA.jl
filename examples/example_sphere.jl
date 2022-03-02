@@ -30,11 +30,11 @@ plotlyjs()
 # |m|kd = 1
 # x = ka =2πa/λ
 
-
 k = 2π
 kvec = [0, 0, k] # wavevector
 E₀  = ComplexF64[1, 0, 0]   # polarisation vector
 
+ε = 1.33 + 0.1im
 
 # 1. create the coordinates of the dipoles
 
@@ -48,17 +48,11 @@ origin = DDA.center(g)
 radius = (8 + 0.49) / 2
 
 sphere = Sphere(origin, radius)
-
-
-coords = dipoles(g, sphere)
-
+coords = coordinates(g, sphere)
 
 # 2. assign the polarizability αj to each dipole,
 
-ε = 1.33 + 0.1im
-d = g.spacing
-
-alphas = fill(LDR(ε, d, kvec, E₀), size(coords))
+alphas = fill(LDR(ε, spacing, kvec, E₀), size(coords))
 
 # 3. calculated the incident field Einc,j at each dipole,
 
@@ -66,8 +60,9 @@ pw = PlaneWave(SVector(kvec...), SVector(E₀...))
 Eincs = [field(pw, coord) for coord in coords ]
 
 # 4. assemble the interaction matrix A and
-# A = DDA.interactions(k, dipoles, alphas)
 prob = DipoleProblem(k, norm(E₀), coords, alphas, Eincs)
+
+A = DDA.interactions(k, coords, alphas)
 
 # 5. solve for P in the system of linear equations
 # P = minres(A, reinterpret(ComplexF64,Eincs), verbose=:true)
@@ -96,7 +91,7 @@ function sphere_system(Nd, k, m)
     sphere = Sphere(DDA.center(grid), (Nd + 0.49) / 2)
 
     # 1. create the coordinates of the dipoles,
-    coords = dipoles(g, sphere)
+    coords = coordinates(g, sphere)
 
     # 2. assign the polarizability αj to each dipole
     # scatterer = Scatterer(sphere, LDRModel(m^2))
@@ -120,7 +115,7 @@ a = Nd / 2
 
 m = 1.33 + 0.01im
 
-k = range(0., 3 / a, length = 21)[2:end]
+k = range(0., 12.5 / a, length = 101)[2:end]
 Q_abs = zeros(length(k), 1)
 Q_sca = zeros(length(k), 1)
 
@@ -131,7 +126,7 @@ for (i, k) = enumerate(k)
     Q_sca[i] = C_sca(sol) / (π * a^2)
 end
 
-plot(k * a, Q_abs, label = "abs", yscale = :log10, ylim = [0.005, 5])
+plot!(k * a, Q_abs, label = "abs", yscale = :log10, ylim = [0.005, 5])
 plot!(k * a, Q_sca, label = "sca")
 
 
