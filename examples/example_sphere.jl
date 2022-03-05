@@ -7,9 +7,9 @@ using DDA
 
 using StaticArrays
 using IterativeSolvers
-using LinearAlgebra
+using LinearAlgebra: norm
 
-using BenchmarkTools
+# using BenchmarkTools
 
 using Plots
 plotlyjs()
@@ -33,6 +33,8 @@ plotlyjs()
 k = 2π
 kvec = [0, 0, k] # wavevector
 E₀  = ComplexF64[1, 0, 0]   # polarisation vector
+# e = [1, 0]  # Jones polarisation vector
+# θ, ϕ = 0.0, 0.0 # rotation angles [rad]
 
 ε = 1.33 + 0.1im
 
@@ -56,6 +58,7 @@ alphas = fill(LDR(ε, spacing, kvec, E₀), size(coords))
 
 # 3. calculated the incident field Einc,j at each dipole,
 
+# pw = PlaneWave(k, e, θ, ϕ)
 pw = PlaneWave(SVector(kvec...), SVector(E₀...))
 Eincs = [field(pw, coord) for coord in coords ]
 
@@ -69,11 +72,13 @@ A = DDA.interactions(k, coords, alphas)
 # P = bicgstabl(A, reinterpret(ComplexF64,Eincs), verbose=:true)
 sol = solve(prob, BiCGStabl(), reltol = 1e-8)
 
-
 @show C_abs(sol)
 @show C_sca(sol)
 @show C_ext(sol)
-# C_abs(sol) = 1.2892547488225787
+
+# C_abs(sol) = 1.2898565760906782
+# C_sca(sol) = 47.62363403739326
+# C_ext(sol) = 48.91349061348394
 
 ############################################################################
 # High-level interface for DDA calculations
@@ -91,11 +96,15 @@ function sphere_system(Nd, k, m)
     sphere = Sphere(DDA.center(grid), (Nd + 0.49) / 2)
 
     # 1. create the coordinates of the dipoles,
-    coords = coordinates(g, sphere)
+    coords = coordinates(grid, sphere)
 
     # 2. assign the polarizability αj to each dipole
     # scatterer = Scatterer(sphere, LDRModel(m^2))
-    alphas = fill(LDR(m^2, d, kvec, E₀), size(coords))
+
+    ε = m^2
+    kvec = [0, 0, k]
+    E₀ = [e..., 0]
+    alphas = fill(LDR(ε, d, kvec, E₀), size(coords))
 
     # 3. calculated the incident field Einc, at each dipole,
     pw = PlaneWave(k, e, θ, ϕ)
@@ -110,6 +119,7 @@ function sphere_system(Nd, k, m)
 end
 
 # Parameters:
+# Nd = 24
 Nd = 8
 a = Nd / 2
 
@@ -126,7 +136,7 @@ for (i, k) = enumerate(k)
     Q_sca[i] = C_sca(sol) / (π * a^2)
 end
 
-plot!(k * a, Q_abs, label = "abs", yscale = :log10, ylim = [0.005, 5])
+plot(k * a, Q_abs, label = "abs", yscale = :log10, ylim = [0.005, 5])
 plot!(k * a, Q_sca, label = "sca")
 
 

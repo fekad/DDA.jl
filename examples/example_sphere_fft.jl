@@ -1,6 +1,5 @@
 using DDA
 
-
 # using Unitful
 # using PhysicalConstants.CODATA2018: c_0
 # using RefractiveIndexDatabase
@@ -10,7 +9,7 @@ using StaticArrays
 using IterativeSolvers
 using LinearAlgebra: norm
 
-using BenchmarkTools
+# using BenchmarkTools
 
 using Plots
 plotlyjs()
@@ -30,13 +29,13 @@ e = [1, 0]  # Jones polarisation vector
 # 1. Define a grid
 origin = [0.0, 0.0, 0.0]
 spacing = 1.0
-dims = (32, 32, 32)
+dims = (8, 8, 8)
 
 grid = CartesianGrid(origin, spacing, dims)
 
 # 2. Define the target(s)
 origin = DDA.center(grid)
-radius = 5.0
+radius = (8 + 0.49) / 2
 
 sphere = Sphere(origin, radius)
 
@@ -119,7 +118,7 @@ end
 
 # Parameters:
 Nd = 24
-Nd = 8
+# Nd = 8
 a = Nd / 2
 
 m = 1.33 + 0.01im
