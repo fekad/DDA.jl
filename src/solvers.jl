@@ -16,10 +16,10 @@ C_sca(sol::AbstractSolution) = C_ext(sol) - C_abs(sol)
 # TODO: storing the prepared (factorised) interaction matrix (like in EELS calculations)
 # TODO: do not trim A*E because it is useful for the nearfield calculations
 
-struct GridSolution <: AbstractSolution
-    P
-    prob
-    alg
+struct GridSolution{T} <: AbstractSolution
+    P::Vector{SVector{3, Complex{T}}}
+    prob::GridProblem{T}
+    alg::AbstractMethod
 end
 
 C_abs(sol::GridSolution) = C_abs(sol.prob.k, sol.prob.E0, sol.P, sol.prob.alphas)

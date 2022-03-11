@@ -60,13 +60,13 @@ struct DipoleProblemHigh{Dim,T<:AbstractFloat} <: AbstractProblem
 end
 
 
-struct GridProblem <: AbstractProblem
-    k
-    E0
-    grid
-    inds
-    alphas
-    Eincs
+struct GridProblem{T} <: AbstractProblem
+    k::T
+    E0::T
+    grid:: CartesianGrid{3,T,SVector{3, T}}
+    inds::Vector{CartesianIndex{3}}
+    alphas::Vector{Complex{T}}
+    Eincs::Vector{SVector{3, Complex{T}}}
 end
 
 struct GridProblemFuture <: AbstractProblem
