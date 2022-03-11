@@ -97,7 +97,7 @@ disk_gap = 4 / 3 # nm
 
 spacing = 1 / 3
 
-Nx = round(Int, disk_d / spacing)
+Nx = round(Int, (2 * disk_d + disk_gap) / spacing)
 Ny = round(Int, disk_d / spacing)
 Nz = round(Int, disk_h / spacing)
 
@@ -111,12 +111,19 @@ grid
 
 # 2. Define the target(s)
 # offset = [spacing / 2, spacing / 2, spacing / 2]
-origin = SVector(disk_d / 2 - spacing / 2, disk_d / 2 - spacing / 2, disk_h / 2)
 radius = disk_d / 2
 
-disk = DDA.Disk(origin, disk_d / 2, disk_h)
+origin = SVector(disk_d / 2 - spacing / 2, disk_d / 2 - spacing / 2, disk_h / 2)
+disk1 = DDA.Disk(origin, disk_d / 2, disk_h)
 
-inds = indices(grid, disk)
+origin = SVector(disk_d + disk_gap + disk_d / 2 - spacing / 2, disk_d / 2 - spacing / 2, disk_h / 2)
+disk2 = DDA.Disk(origin, disk_d / 2, disk_h)
+
+inds1 = indices(grid, disk1)
+inds2 = indices(grid, disk2)
+
+
+inds = [inds1..., inds2...]
 coords = grid[inds]
 
 layout = Layout(scene = attr(aspectmode = :data, camera_projection_type = :orthographic))
@@ -179,27 +186,41 @@ Q_sca = zeros(length(lambda_range))
 
 
 function build_system()
+
+
     # 1. Define a grid
     disk_d = 10.0 # nm
     disk_h = 1.0 # nm
-    disk_gap = 4 / 3 # nm
+    disk_gap = 20 / 3 # nm
 
     spacing = 1 / 3
 
-    Nx = round(Int, disk_d / spacing)
+    Nx = round(Int, (2 * disk_d + disk_gap) / spacing)
     Ny = round(Int, disk_d / spacing)
     Nz = round(Int, disk_h / spacing)
 
+    # offset = [spacing / 2, spacing / 2, spacing / 2]
+    # origin = [disk_d / 2, disk_d / 2 , disk_h / 2]
     origin = [0, 0, 0]
+
     grid = CartesianGrid(origin, spacing, (Nx, Ny, Nz))
+    grid
+
 
     # 2. Define the target(s)
-    origin = SVector(disk_d / 2 - spacing / 2, disk_d / 2 - spacing / 2, disk_h / 2)
+    # offset = [spacing / 2, spacing / 2, spacing / 2]
     radius = disk_d / 2
 
-    disk = DDA.Disk(origin, disk_d / 2, disk_h)
+    origin = SVector(disk_d / 2 - spacing / 2, disk_d / 2 - spacing / 2, disk_h / 2)
+    disk1 = DDA.Disk(origin, disk_d / 2, disk_h)
 
-    inds = indices(grid, disk)
+    origin = SVector(disk_d + disk_gap + disk_d / 2 - spacing / 2, disk_d / 2 - spacing / 2, disk_h / 2)
+    disk2 = DDA.Disk(origin, disk_d / 2, disk_h)
+
+    inds1 = indices(grid, disk1)
+    inds2 = indices(grid, disk2)
+
+    inds = [inds1..., inds2...]
     coords = grid[inds]
 
     return grid, inds, coords
@@ -210,7 +231,7 @@ function run_calc(lambda, model, verbose = false)
     grid, inds, coords = build_system()
 
     # Parameters
-    e = [1, 0]        # Jones polarisation vector
+    e = [0, 1]        # Jones polarisation vector
     θ, ϕ = 0.0, 0.0   # rotation angles [rad]
 
     k = 2π / lambda
@@ -228,25 +249,23 @@ function run_calc(lambda, model, verbose = false)
     # 5. Define the DDA problem
     prob = GridProblem(k, norm(e), grid, inds, alphas, Eincs)
 
-
     # 6. Solve the DDA problem
     sol = solve(prob, BiCGStabl(), reltol = 1e-4, verbose = verbose)
     return C_abs(sol), C_sca(sol)
-    # return 1., 1.
 
 end
-
-
-to = TimerOutput()
-@timeit to "main" begin
-    Threads.@threads :static for i = 1:length(lambda_range)
-        @show i
-
-        Q_abs[i], Q_sca[i] = run_calc(lambda_range[i], model)
-
-    end
-end
-print_timer(to)
+#
+#
+# to = TimerOutput()
+# @timeit to "main" begin
+#     Threads.@threads :static for i = 1:length(lambda_range)
+#         @show i
+#
+#         Q_abs[i], Q_sca[i] = run_calc(lambda_range[i], model)
+#
+#     end
+# end
+# print_timer(to)
 
 to = TimerOutput()
 for i = eachindex(lambda_range)
