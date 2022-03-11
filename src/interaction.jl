@@ -19,12 +19,12 @@ A_{jk} = \frac{\exp(i k r_{jk})}{r_{jk}} \left[
 ```
 """
 function calc_Ajk(k, r_jk)
-    r = norm(r_jk)
-    rn = r_jk / r
+    r_norm = norm(r_jk)
+    r_hat = r_jk / r_norm
 
-    A_jk = exp(im * k * r) / r * (k^2 * (rn * rn' - I) + (im * k * r - 1) / r^2 * (3 * rn * rn' - I))
+    A_jk = exp(im * k * r_norm) / r_norm * (k^2 * (r_hat * r_hat' - I) + (im * k * r_norm - 1) / r_norm^2 * (3 * r_hat * r_hat' - I))
     return A_jk
 end
 
-calc_Ajk(k,  r_j, r_k) = calc_Ajk(k, r_j - r_k)
+calc_Ajk(k, r_j, r_k) = calc_Ajk(k, r_j - r_k)
 

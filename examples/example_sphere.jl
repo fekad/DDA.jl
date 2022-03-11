@@ -32,7 +32,7 @@ plotlyjs()
 
 k = 2π
 kvec = [0, 0, k] # wavevector
-E₀  = ComplexF64[1, 0, 0]   # polarisation vector
+E₀ = ComplexF64[1, 0, 0]   # polarisation vector
 # e = [1, 0]  # Jones polarisation vector
 # θ, ϕ = 0.0, 0.0 # rotation angles [rad]
 
@@ -60,7 +60,7 @@ alphas = fill(LDR(ε, spacing, kvec, E₀), size(coords))
 
 # pw = PlaneWave(k, e, θ, ϕ)
 pw = PlaneWave(SVector(kvec...), SVector(E₀...))
-Eincs = [field(pw, coord) for coord in coords ]
+Eincs = [field(pw, coord) for coord in coords]
 
 # 4. assemble the interaction matrix A and
 prob = DipoleProblem(k, norm(E₀), coords, alphas, Eincs)
@@ -108,7 +108,7 @@ function sphere_system(Nd, k, m)
 
     # 3. calculated the incident field Einc, at each dipole,
     pw = PlaneWave(k, e, θ, ϕ)
-    Eincs = [field(pw, coord) for coord in coords ]
+    Eincs = [field(pw, coord) for coord in coords]
 
     # 5. Define the DDA problem
     prob = DipoleProblem(k, norm(E₀), coords, alphas, Eincs)
@@ -125,7 +125,7 @@ a = Nd / 2
 
 m = 1.33 + 0.01im
 
-k = range(0., 12.5 / a, length = 101)[2:end]
+k = range(0.0, 12.5 / a, length = 101)[2:end]
 Q_abs = zeros(length(k), 1)
 Q_sca = zeros(length(k), 1)
 
@@ -139,4 +139,32 @@ end
 plot(k * a, Q_abs, label = "abs", yscale = :log10, ylim = [0.005, 5])
 plot!(k * a, Q_sca, label = "sca")
 
+
+
+
+#
+#
+# grid = CartesianGrid([0.0, 0.0, 0.0], d, (Nd, Nd, Nd))
+# sphere = Sphere(DDA.center(grid), (Nd + 0.49) / 2)
+#
+# scatterers = [
+#     Scatterer(grid, sphere, LDR()),
+#     Scatterer(Dipole(position), polarisability)
+# ]
+#
+# incidentfield = PlaneWave(k, e, θ, ϕ)
+#
+# calc = DDACalculation(scatterers, incidentfield)
+# sol = solve(calc, BiCGStabl(), reltol = 1e-8)
+#
+#
+# lambda = range(600, 700, 101)
+# calc = FrequencyCalculation(lambda, scatterers, incidentfield)
+# sol = solve(calc, BiCGStabl(), reltol = 1e-8)
+#
+#
+# energy = range(0, 3, 11)
+# lambda = range(600, 700, 101)
+# sol = solve(calc, BiCGStabl(), reltol = 1e-8)
+# calc = EELSCalculation(energy, lambda, scatterers, incidentfield)
 

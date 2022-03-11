@@ -22,8 +22,8 @@ struct GridSolution <: AbstractSolution
     alg
 end
 
-C_abs(sol::GridSolution)   = C_abs(sol.prob.k, sol.prob.E0, sol.P, sol.prob.alphas)
-C_ext(sol::GridSolution)   = C_ext(sol.prob.k, sol.prob.E0, sol.prob.Eincs, sol.P)
+C_abs(sol::GridSolution) = C_abs(sol.prob.k, sol.prob.E0, sol.P, sol.prob.alphas)
+C_ext(sol::GridSolution) = C_ext(sol.prob.k, sol.prob.E0, sol.prob.Eincs, sol.P)
 # C_abs(sol::GridSolution) = C_abs(norm(sol.prob.k), norm(sol.prob.E0), sol.P, sol.prob.alphas)
 # C_ext(sol::GridSolution)= C_ext(norm(sol.prob.k), norm(sol.prob.E0), sol.prob.Eincs, sol.P)
 
@@ -100,7 +100,28 @@ function TensorConvolution(grid::CartesianGrid, inds, k_norm, alphas)
     end
     Ĝ[:, 1, 1, 1] .= zero(ComplexF64)
 
-    extend!(Ĝ, Nx, Ny, Nz)
+    # Periodic extension
+    g = [+1 -1 -1 +1 +1 +1  # x
+        +1 -1 +1 +1 -1 +1  # y
+        +1 +1 -1 +1 -1 +1  # z
+        +1 +1 -1 +1 -1 +1  # xy
+        +1 -1 +1 +1 -1 +1  # xz
+        +1 -1 -1 +1 +1 +1]  # yz
+
+    Ĝ[:, Nx+1, :, :] .= zero(ComplexF64)
+    Ĝ[:, :, Ny+1, :] .= zero(ComplexF64)
+    Ĝ[:, :, :, Nz+1] .= zero(ComplexF64)
+
+    for i = 1:6
+        Ĝ[i, Nx+2:2Nx, 1:Ny, 1:Nz] = Ĝ[i, Nx:-1:2, 1:Ny, 1:Nz] * g[1, i]       # x
+        Ĝ[i, 1:Nx, Ny+2:2Ny, 1:Nz] = Ĝ[i, 1:Nx, Ny:-1:2, 1:Nz] * g[2, i]       # y
+        Ĝ[i, 1:Nx, 1:Ny, Nz+2:2Nz] = Ĝ[i, 1:Nx, 1:Ny, Nz:-1:2] * g[3, i]       # z
+        Ĝ[i, Nx+2:2Nx, Ny+2:2Ny, 1:Nz] = Ĝ[i, Nx:-1:2, Ny:-1:2, 1:Nz] * g[4, i] # xy
+        Ĝ[i, Nx+2:2Nx, 1:Ny, Nz+2:2Nz] = Ĝ[i, Nx:-1:2, 1:Ny, Nz:-1:2] * g[5, i] # xz
+        Ĝ[i, 1:Nx, Ny+2:2Ny, Nz+2:2Nz] = Ĝ[i, 1:Nx, Ny:-1:2, Nz:-1:2] * g[6, i] # yz
+    end
+    Ĝ[:, Nx+2:2Nx, Ny+2:2Ny, Nz+2:2Nz] = Ĝ[:, Nx:-1:2, Ny:-1:2, Nz:-1:2]   # xyz
+
     fft!(Ĝ, 2:4)
 
     tmp = zeros(ComplexF64, 3, 2Nx, 2Ny, 2Nz)
@@ -146,36 +167,8 @@ end
 
 
 
-function extend!(Ĝ::Array{ComplexF64,4}, Nx, Ny, Nz)
-
-    # Periodic extension
-    g = [+1 -1 -1 +1 +1 +1  # x
-        +1 -1 +1 +1 -1 +1  # y
-        +1 +1 -1 +1 -1 +1  # z
-        +1 +1 -1 +1 -1 +1  # xy
-        +1 -1 +1 +1 -1 +1  # xz
-        +1 -1 -1 +1 +1 +1]  # yz
-
-    Ĝ[:, Nx+1, :, :] .= zero(ComplexF64)
-    Ĝ[:, :, Ny+1, :] .= zero(ComplexF64)
-    Ĝ[:, :, :, Nz+1] .= zero(ComplexF64)
-
-    for i = 1:6
-        Ĝ[i, Nx+2:2Nx, 1:Ny, 1:Nz] = Ĝ[i, Nx:-1:2, 1:Ny, 1:Nz] * g[1, i]       # x
-        Ĝ[i, 1:Nx, Ny+2:2Ny, 1:Nz] = Ĝ[i, 1:Nx, Ny:-1:2, 1:Nz] * g[2, i]       # y
-        Ĝ[i, 1:Nx, 1:Ny, Nz+2:2Nz] = Ĝ[i, 1:Nx, 1:Ny, Nz:-1:2] * g[3, i]       # z
-        Ĝ[i, Nx+2:2Nx, Ny+2:2Ny, 1:Nz] = Ĝ[i, Nx:-1:2, Ny:-1:2, 1:Nz] * g[4, i] # xy
-        Ĝ[i, Nx+2:2Nx, 1:Ny, Nz+2:2Nz] = Ĝ[i, Nx:-1:2, 1:Ny, Nz:-1:2] * g[5, i] # xz
-        Ĝ[i, 1:Nx, Ny+2:2Ny, Nz+2:2Nz] = Ĝ[i, 1:Nx, Ny:-1:2, Nz:-1:2] * g[6, i] # yz
-    end
-    Ĝ[:, Nx+2:2Nx, Ny+2:2Ny, Nz+2:2Nz] = Ĝ[:, Nx:-1:2, Ny:-1:2, Nz:-1:2]   # xyz
-
-end
-
-
-
 function solve(p::GridProblem, alg::BiCGStabl;
-    reltol=1e-3, verbose=true, kwargs...)
+    reltol = 1e-3, verbose = true, kwargs...)
 
     # # 1. create the coordinates of the dipoles
     # # 2. assign the polarizability αj to each dipole
@@ -208,7 +201,7 @@ function solve(p::GridProblem, alg::BiCGStabl;
     P = similar(p.alphas, V)
     fill!(P, zero(V))
 
-    bicgstabl!(reinterpret(Complex{T}, P), A, reinterpret(Complex{T}, p.Eincs); reltol=reltol, verbose=verbose, kwargs...)
+    bicgstabl!(reinterpret(Complex{T}, P), A, reinterpret(Complex{T}, p.Eincs); reltol = reltol, verbose = verbose, kwargs...)
 
     return GridSolution(P, p, alg)
 end
@@ -229,19 +222,19 @@ function interactions(k, r, alphas)
     out = zeros(ComplexF64, 3, N, 3, N)
 
     for i in 1:N
-        out[:,i,:,i] = Diagonal(inv(alphas[i]) * I, 3)
+        out[:, i, :, i] = Diagonal(inv(alphas[i]) * I, 3)
     end
 
     for i in 2:N
-        for j in 1:i - 1
-            out[:,i,:,j] = calc_Ajk(k, r[i], r[j])
+        for j in 1:i-1
+            out[:, i, :, j] = calc_Ajk(k, r[i], r[j])
         end
     end
     return Symmetric(reshape(out, 3N, 3N), :L)
 end
 
 
-function solve(p::DipoleProblem, alg::BiCGStabl; reltol=1e-3, verbose=true, kwargs...)
+function solve(p::DipoleProblem, alg::BiCGStabl; reltol = 1e-3, verbose = true, kwargs...)
 
     # # 1. create the coordinates of the dipoles
     # # 2. assign the polarizability αj to each dipole
@@ -278,7 +271,7 @@ function solve(p::DipoleProblem, alg::BiCGStabl; reltol=1e-3, verbose=true, kwar
     P = similar(p.dipoles, V)
     fill!(P, zero(V))
 
-    bicgstabl!(reinterpret(Complex{T}, P), A, reinterpret(Complex{T}, p.Eincs); reltol=reltol, verbose=verbose, kwargs...)
+    bicgstabl!(reinterpret(Complex{T}, P), A, reinterpret(Complex{T}, p.Eincs); reltol = reltol, verbose = verbose, kwargs...)
 
     return DipoleSolution(P, p, alg)
 end

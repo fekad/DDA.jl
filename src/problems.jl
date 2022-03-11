@@ -7,17 +7,6 @@ abstract type AbstractProblem end
 # 5. solve for P in the system of linear equations
 #
 
-# doi:10.1016/j.jqsrt.2011.03.012
-# Knowing Pj, other quantities such as
-# - the scattered field,
-# - dipole force,
-# - Poynting vector,
-# - extinction,
-# - absorption and
-# - scattering cross sections,
-# - phase function,
-# - Mueller matrix etc.
-# can be calculated.
 
 
 # TODO: allpha is a 3x3 (symmetric) tensor by defualt )
