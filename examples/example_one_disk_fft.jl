@@ -165,69 +165,71 @@ sol = solve(prob, BiCGStabl(), reltol = 1e-8, verbose = true)
 
 
 # Parameters:
-lambda_range = 620:1.0:740 # nm
+lambda_range = 632:1.0:732 # nm
 
 Q_abs = zeros(length(lambda_range))
 Q_sca = zeros(length(lambda_range))
 
-for (i, lambda) = enumerate(lambda_range)
+to = TimerOutput()
+@timeit to "main" begin
+    Threads.@threads for i = eachindex(lambda_range)
 
-    # 1. Define a grid
-    disk_d = 10.0 # nm
-    disk_h = 1.0 # nm
-    disk_gap = 4 / 3 # nm
+        # 1. Define a grid
+        disk_d = 10.0 # nm
+        disk_h = 1.0 # nm
+        disk_gap = 4 / 3 # nm
 
-    spacing = 1 / 3
+        spacing = 1 / 3
 
-    Nx = round(Int, disk_d / spacing)
-    Ny = round(Int, disk_d / spacing)
-    Nz = round(Int, disk_h / spacing)
+        Nx = round(Int, disk_d / spacing)
+        Ny = round(Int, disk_d / spacing)
+        Nz = round(Int, disk_h / spacing)
 
-    origin = [0, 0, 0]
-    grid = CartesianGrid(origin, spacing, (Nx, Ny, Nz))
+        origin = [0, 0, 0]
+        grid = CartesianGrid(origin, spacing, (Nx, Ny, Nz))
 
-    # 2. Define the target(s)
-    origin = SVector(disk_d / 2 - spacing / 2, disk_d / 2 - spacing / 2, disk_h / 2)
-    radius = disk_d / 2
+        # 2. Define the target(s)
+        origin = SVector(disk_d / 2 - spacing / 2, disk_d / 2 - spacing / 2, disk_h / 2)
+        radius = disk_d / 2
 
-    disk = DDA.Disk(origin, disk_d / 2, disk_h)
+        disk = DDA.Disk(origin, disk_d / 2, disk_h)
 
-    inds = indices(grid, disk)
-    coords = grid[inds]
+        inds = indices(grid, disk)
+        coords = grid[inds]
 
-    # Parameters
-    e = [1, 0]        # Jones polarisation vector
-    θ, ϕ = 0.0, 0.0   # rotation angles [rad]
+        # Parameters
+        e = [1, 0]        # Jones polarisation vector
+        θ, ϕ = 0.0, 0.0   # rotation angles [rad]
 
-    k = 2π / lambda
-    ε = model(lambda)
+        k = 2π / lambda_range[i]
+        ε = model(lambda_range[i])
 
-    kvec = [0, 0, k]
-    E₀ = [e..., 0]
-    alpha = LDR(ε, spacing, kvec, E₀)
-    alphas = fill(alpha, size(inds))
+        kvec = [0, 0, k]
+        E₀ = [e..., 0]
+        alpha = LDR(ε, spacing, kvec, E₀)
+        alphas = fill(alpha, size(inds))
 
-    # 3. calculated the incident field Einc, at each dipole,
-    pw = PlaneWave(k, e, θ, ϕ)
-    Eincs = [field(pw, coord) for coord in coords]
+        # 3. calculated the incident field Einc, at each dipole,
+        pw = PlaneWave(k, e, θ, ϕ)
+        Eincs = [field(pw, coord) for coord in coords]
 
-    # 5. Define the DDA problem
-    prob = GridProblem(k, norm(e), grid, inds, alphas, Eincs)
+        # 5. Define the DDA problem
+        prob = GridProblem(k, norm(e), grid, inds, alphas, Eincs)
+        # 6. Solve the DDA problem
+        sol = solve(prob, BiCGStabl(), reltol = 1e-4, verbose = false)
 
-    # 6. Solve the DDA problem
-    sol = solve(prob, BiCGStabl(), reltol = 1e-4, verbose = true)
 
-
-    Q_abs[i] = C_abs(sol)
-    Q_sca[i] = C_sca(sol)
+        Q_abs[i] = C_abs(sol)
+        Q_sca[i] = C_sca(sol)
+    end
 end
-
+print_timer(to)
 
 
 layout = Layout()
 trace = [
-    scatter(x=lambda_range, y=Q_abs, label = "abs"),
-    scatter(x=lambda_range, y=Q_sca, label = "sca"),
+    scatter(x=lambda_range, y=Q_abs, name = "abs"),
+    scatter(x=lambda_range, y=Q_sca, name = "sca"),
 
 ]
 plot(trace, layout)
@@ -239,7 +241,7 @@ plot!(lambda_range, Q_sca, label = "sca");
 plot!(lambda_range, Q_abs + Q_sca, label = "ext")
 
 
-itIs1good
+
 
 lambda_range = 620:1.0:740
 
