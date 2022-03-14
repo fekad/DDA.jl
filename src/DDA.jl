@@ -30,7 +30,7 @@ export Dipole, Sphere, Disk
 export discretize, coordinates, indices
 include("shapes.jl")
 
-export  Atomic, LDRModel
+export Atomic, LDRModel
 export CM, CMRR, GOHG, ILDR, LDR
 include("polarizability.jl")
 export Scatterer
@@ -48,7 +48,7 @@ include("electricfield.jl")
 export GridProblem, DipoleProblem
 include("problems.jl")
 
-export solve, Direct, BiCGStabl
+export solve, solve!, Direct, BiCGStabl
 include("solvers.jl")
 
 

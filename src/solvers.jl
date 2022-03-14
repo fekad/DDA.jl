@@ -51,6 +51,12 @@ C_ext(sol::GridSolution) = C_ext(sol.prob.k, sol.prob.E0, sol.prob.Eincs, sol.P)
 #
 #     return occ, alphas
 # end
+#
+
+# TODO: Warnings
+# k = 2π/λ
+# |m|kd = 1
+# x = ka =2πa/λ
 
 
 # TODO: adding parametic types like here: https://github.com/JuliaMatrices/ToeplitzMatrices.jl/blob/master/src/ToeplitzMatrices.jl
@@ -166,8 +172,21 @@ function LinearAlgebra.mul!(y::StridedVector, A::TensorConvolution, x::StridedVe
 end
 
 
+function solve(p::GridProblem, alg::BiCGStabl; kwargs...)
 
-function solve(p::GridProblem, alg::BiCGStabl;
+    # 5. solve for P in the system of linear equations
+    T = Float64
+    V = SVector{3,Complex{Float64}}
+
+    P = similar(p.alphas, V)
+    fill!(P, zero(V))
+
+    return solve!(P, p, alg; kwargs...)
+
+end
+
+
+function solve!(P::Vector{SVector{3,Complex{Float64}}}, p::GridProblem, alg::BiCGStabl;
     reltol = 1e-3, verbose = true, kwargs...)
 
     # # 1. create the coordinates of the dipoles
@@ -188,23 +207,22 @@ function solve(p::GridProblem, alg::BiCGStabl;
     #     Einc[i] = field(p.Einc, coords[i])
     # end
 
+    T = Float64
+    # V = SVector{3,Complex{T}}
+    #
+    # P = similar(p.alphas, V)
+    # fill!(P, zero(V))
 
     # 4. assemble the interaction matrix A and
-
     A = TensorConvolution(p.grid, p.inds, p.k, p.alphas)
 
-
     # 5. solve for P in the system of linear equations
-    T = Float64
-    V = SVector{3,Complex{T}}
-
-    P = similar(p.alphas, V)
-    fill!(P, zero(V))
-
     bicgstabl!(reinterpret(Complex{T}, P), A, reinterpret(Complex{T}, p.Eincs); reltol = reltol, verbose = verbose, kwargs...)
 
     return GridSolution(P, p, alg)
 end
+
+
 
 
 struct DipoleSolution <: AbstractSolution
