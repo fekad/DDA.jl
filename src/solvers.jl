@@ -95,7 +95,7 @@ function TensorConvolution(grid::CartesianGrid, inds, k_norm, alphas)
     Ĝ = Array{ComplexF64}(undef, 6, 2Nx, 2Ny, 2Nz)
 
     for i = 1:Nx, j = 1:Ny, k = 1:Nz
-        Rij = grid[i, j, k]
+        Rij = [i-1, j-1, k-1] *  grid.spacing
         A = calc_Ajk(k_norm, Rij)
         Ĝ[1, i, j, k] = A[1, 1] # xx
         Ĝ[2, i, j, k] = A[1, 2] # xy
